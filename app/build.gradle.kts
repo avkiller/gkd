@@ -56,7 +56,7 @@ android {
         minSdk = project.properties["android_minSdk"].toString().toInt()
         targetSdk = project.properties["android_targetSdk"].toString().toInt()
 
-        applicationId = "li.songe.gkd"
+        applicationId = "com.fireworld.gkd"
         versionCode = 64
         versionName = "1.10.4-beta.1"
 
