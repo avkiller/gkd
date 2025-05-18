@@ -3,13 +3,13 @@ name: Build-Apk
 on:
   workflow_dispatch:
 
-  push:
-    branches:
-      - '**'
-    paths-ignore:
-      - 'LICENSE'
-      - '*.md'
-      - '.github/**'
+  # push:
+  #   branches:
+  #     - '**'
+  #   paths-ignore:
+  #     - 'LICENSE'
+  #     - '*.md'
+  #     - '.github/**'
 
 jobs:
   build:
