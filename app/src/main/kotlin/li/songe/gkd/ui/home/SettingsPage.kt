@@ -38,7 +38,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ramcosta.composedestinations.generated.destinations.AboutPageDestination
 import com.ramcosta.composedestinations.generated.destinations.AdvancedPageDestination
+<<<<<<< HEAD
 import com.ramcosta.composedestinations.utils.toDestinationsNavigator
+=======
+import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import li.songe.gkd.appScope
@@ -50,12 +54,19 @@ import li.songe.gkd.ui.component.autoFocus
 import li.songe.gkd.ui.component.updateDialogOptions
 import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.local.LocalMainViewModel
+<<<<<<< HEAD
 import li.songe.gkd.ui.local.LocalNavController
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.itemPadding
 import li.songe.gkd.ui.style.titleItemPadding
 import li.songe.gkd.ui.theme.supportDynamicColor
 import li.songe.gkd.util.DarkThemeOption
+<<<<<<< HEAD
+=======
+import li.songe.gkd.util.ShortUrlSet
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.util.findOption
 import li.songe.gkd.util.initOrResetAppInfoCache
 import li.songe.gkd.util.launchAsFn
@@ -72,7 +83,10 @@ val settingsNav = BottomNavItem(
 @Composable
 fun useSettingsPage(): ScaffoldExt {
     val mainVm = LocalMainViewModel.current
+<<<<<<< HEAD
     val navController = LocalNavController.current
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     val store by storeFlow.collectAsState()
     val vm = viewModel<HomeVm>()
 
@@ -350,11 +364,23 @@ fun useSettingsPage(): ScaffoldExt {
             )
 
             SettingItem(title = "高级设置", onClick = {
+<<<<<<< HEAD
                 navController.toDestinationsNavigator().navigate(AdvancedPageDestination)
             })
 
             SettingItem(title = "关于", onClick = {
                 navController.toDestinationsNavigator().navigate(AboutPageDestination)
+=======
+                mainVm.navigatePage(AdvancedPageDestination)
+            })
+
+            SettingItem(title = "捐赠支持", onClick = {
+                mainVm.navigatePage(WebViewPageDestination(ShortUrlSet.URL10))
+            })
+
+            SettingItem(title = "关于", onClick = {
+                mainVm.navigatePage(AboutPageDestination)
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
             })
 
             Spacer(modifier = Modifier.height(EmptyHeight))

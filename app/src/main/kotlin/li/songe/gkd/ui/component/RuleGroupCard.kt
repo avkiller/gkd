@@ -56,10 +56,13 @@ import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
 
 
+<<<<<<< HEAD
 interface RuleGroupExtVm {
     val focusGroupKeyFlow: MutableStateFlow<Int?>
 }
 
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 @Composable
 fun RuleGroupCard(
     modifier: Modifier = Modifier,
@@ -70,7 +73,11 @@ fun RuleGroupCard(
     category: RawSubscription.RawCategory?,
     categoryConfig: CategoryConfig?,
     showBottom: Boolean,
+<<<<<<< HEAD
     vm: RuleGroupExtVm? = null,
+=======
+    focusGroupFlow: MutableStateFlow<Triple<Long, String?, Int>?>? = null,
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     isSelectedMode: Boolean = false,
     isSelected: Boolean = false,
     onLongClick: () -> Unit = {},
@@ -81,6 +88,7 @@ fun RuleGroupCard(
     val inGlobalAppPage = appId != null && group is RawSubscription.RawGlobalGroup
 
     var highlighted by remember { mutableStateOf(false) }
+<<<<<<< HEAD
     if (vm != null) {
         val focusGroupKey = vm.focusGroupKeyFlow.collectAsState()
         LaunchedEffect(group.key, focusGroupKey.value) {
@@ -88,11 +96,31 @@ fun RuleGroupCard(
                 var i = 0
                 while (isActive && i < 4) {
                     delay(500)
+=======
+    if (focusGroupFlow != null) {
+        val focusGroup by focusGroupFlow.collectAsState()
+        if (subs.id == focusGroup?.first && group.key == focusGroup?.third && if (group is RawSubscription.RawAppGroup) appId == focusGroup?.second else focusGroup?.second == null) {
+            LaunchedEffect(isSelectedMode) {
+                if (isSelectedMode) {
+                    highlighted = false
+                    focusGroupFlow.value = null
+                    return@LaunchedEffect
+                }
+                delay(300)
+                var i = 0
+                highlighted = true
+                while (isActive && i < 4) {
+                    delay(400)
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                     highlighted = !highlighted
                     i++
                 }
                 highlighted = false
+<<<<<<< HEAD
                 vm.focusGroupKeyFlow.value = null
+=======
+                focusGroupFlow.value = null
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
             }
         }
     }

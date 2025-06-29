@@ -63,7 +63,10 @@ import com.dylanc.activityresult.launcher.launchForResult
 import com.ramcosta.composedestinations.generated.destinations.SlowGroupPageDestination
 import com.ramcosta.composedestinations.generated.destinations.UpsertRuleGroupPageDestination
 import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
+<<<<<<< HEAD
 import com.ramcosta.composedestinations.utils.toDestinationsNavigator
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import li.songe.gkd.MainActivity
@@ -75,7 +78,10 @@ import li.songe.gkd.ui.component.SubsItemCard
 import li.songe.gkd.ui.component.TextMenu
 import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.local.LocalMainViewModel
+<<<<<<< HEAD
 import li.songe.gkd.ui.local.LocalNavController
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.itemVerticalPadding
 import li.songe.gkd.util.LIST_PLACEHOLDER_KEY
@@ -109,7 +115,10 @@ val subsNav = BottomNavItem(
 fun useSubsManagePage(): ScaffoldExt {
     val context = LocalActivity.current as MainActivity
     val mainVm = LocalMainViewModel.current
+<<<<<<< HEAD
     val navController = LocalNavController.current
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 
     val vm = viewModel<HomeVm>()
     val subItems by subsItemsFlow.collectAsState()
@@ -241,8 +250,13 @@ fun useSubsManagePage(): ScaffoldExt {
                                 selectedIds
                             }
                             if (canDeleteIds.isNotEmpty()) {
+<<<<<<< HEAD
                                 val text = "确定删除所选 ${canDeleteIds.size} 个订阅?".let {
                                     if (selectedIds.contains(LOCAL_SUBS_ID)) "$it\n\n注: 不包含本地订阅" else it
+=======
+                                val text = "确定删除所选 ${canDeleteIds.size} 个订阅?".let { s ->
+                                    if (selectedIds.contains(LOCAL_SUBS_ID)) "$s\n\n注: 不包含本地订阅" else s
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                                 }
                                 IconButton(onClick = vm.viewModelScope.launchAsFn {
                                     mainVm.dialogFlow.waitResult(
@@ -270,8 +284,12 @@ fun useSubsManagePage(): ScaffoldExt {
                                 exit = scaleOut(),
                             ) {
                                 IconButton(onClick = throttle {
+<<<<<<< HEAD
                                     navController.toDestinationsNavigator()
                                         .navigate(SlowGroupPageDestination)
+=======
+                                    mainVm.navigatePage(SlowGroupPageDestination)
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                                 }) {
                                     Icon(
                                         imageVector = Icons.Outlined.Eco,
@@ -289,7 +307,11 @@ fun useSubsManagePage(): ScaffoldExt {
                             }) {
                                 val scope = rememberCoroutineScope()
                                 val enableMatch by remember {
+<<<<<<< HEAD
                                     storeFlow.map(scope) { it.enableMatch }
+=======
+                                    storeFlow.map(scope) { s -> s.enableMatch }
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                                 }.collectAsState()
                                 val id = if (enableMatch) SafeR.ic_flash_on else SafeR.ic_flash_off
                                 Icon(
@@ -502,8 +524,12 @@ fun useSubsManagePage(): ScaffoldExt {
                                                     text = "查看耗电说明",
                                                     modifier = Modifier.clickable(onClick = throttle {
                                                         mainVm.dialogFlow.value = null
+<<<<<<< HEAD
                                                         mainVm.navController.toDestinationsNavigator()
                                                             .navigate(
+=======
+                                                        mainVm.navigatePage(
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                                                                 WebViewPageDestination(
                                                                     initUrl = ShortUrlSet.URL6
                                                                 )

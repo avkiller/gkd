@@ -12,7 +12,10 @@ import com.hjq.permissions.OnPermissionCallback
 import com.hjq.permissions.Permission
 import com.hjq.permissions.XXPermissions
 import com.ramcosta.composedestinations.generated.destinations.AppOpsAllowPageDestination
+<<<<<<< HEAD
 import com.ramcosta.composedestinations.utils.toDestinationsNavigator
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -25,7 +28,11 @@ import li.songe.gkd.app
 import li.songe.gkd.appOpsManager
 import li.songe.gkd.appScope
 import li.songe.gkd.shizuku.shizukuCheckGranted
+<<<<<<< HEAD
 import li.songe.gkd.ui.local.LocalNavController
+=======
+import li.songe.gkd.ui.local.LocalMainViewModel
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.util.forceUpdateAppList
 import li.songe.gkd.util.initOrResetAppInfoCache
 import li.songe.gkd.util.launchTry
@@ -168,9 +175,15 @@ val foregroundServiceSpecialUseState by lazy {
         reason = AuthReason(
             text = "当前操作权限「特殊用途的前台服务」已被限制, 请先解除限制",
             renderConfirm = {
+<<<<<<< HEAD
                 val navController = LocalNavController.current
                 {
                     navController.toDestinationsNavigator().navigate(AppOpsAllowPageDestination)
+=======
+                val mainVm = LocalMainViewModel.current
+                {
+                    mainVm.navigatePage(AppOpsAllowPageDestination)
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                 }
             }
         ),

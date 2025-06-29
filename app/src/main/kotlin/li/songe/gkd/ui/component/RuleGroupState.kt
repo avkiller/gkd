@@ -6,7 +6,10 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.viewModelScope
 import com.ramcosta.composedestinations.generated.destinations.SubsGlobalGroupExcludePageDestination
 import com.ramcosta.composedestinations.generated.destinations.UpsertRuleGroupPageDestination
+<<<<<<< HEAD
 import com.ramcosta.composedestinations.utils.toDestinationsNavigator
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
@@ -21,7 +24,11 @@ import li.songe.gkd.data.RawSubscription
 import li.songe.gkd.data.SubsConfig
 import li.songe.gkd.db.DbSet
 import li.songe.gkd.ui.getGlobalGroupChecked
+<<<<<<< HEAD
 import li.songe.gkd.ui.local.LocalNavController
+=======
+import li.songe.gkd.ui.local.LocalMainViewModel
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.util.getGroupEnable
 import li.songe.gkd.util.launchAsFn
 import li.songe.gkd.util.subsIdToRawFlow
@@ -220,7 +227,11 @@ class RuleGroupState(
 
     @Composable
     fun Render() {
+<<<<<<< HEAD
         val navController = LocalNavController.current
+=======
+        val mainVm = LocalMainViewModel.current
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 
         val showGroupState = showGroupFlow.collectAsState().value
         val showSubs = useSubs(showGroupState?.subsId)
@@ -244,12 +255,19 @@ class RuleGroupState(
                             appId = showGroupState.appId,
                         )
                     )
+<<<<<<< HEAD
 //                    editOrAddGroupFlow.value = showGroupState
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                 },
                 onClickEditExclude = {
                     dismissShow()
                     if (showGroupState.appId == null) {
+<<<<<<< HEAD
                         navController.toDestinationsNavigator().navigate(
+=======
+                        mainVm.navigatePage(
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                             SubsGlobalGroupExcludePageDestination(
                                 showGroupState.subsId,
                                 showGroupState.groupKey

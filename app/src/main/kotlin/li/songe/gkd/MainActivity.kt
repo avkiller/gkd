@@ -29,7 +29,10 @@ import com.ramcosta.composedestinations.DestinationsNavHost
 import com.ramcosta.composedestinations.generated.NavGraphs
 import com.ramcosta.composedestinations.generated.destinations.AuthA11YPageDestination
 import com.ramcosta.composedestinations.utils.currentDestinationAsState
+<<<<<<< HEAD
 import com.ramcosta.composedestinations.utils.toDestinationsNavigator
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -159,7 +162,11 @@ class MainActivity : ComponentActivity() {
 
     private var lastBackPressedTime = 0L
 
+<<<<<<< HEAD
     @Suppress("OVERRIDE_DEPRECATION")
+=======
+    @Suppress("OVERRIDE_DEPRECATION", "GestureBackNavigation")
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     override fun onBackPressed() {
         // onBackPressedDispatcher.addCallback is not work, it will be covered by compose navigation
         val t = System.currentTimeMillis()
@@ -169,6 +176,17 @@ class MainActivity : ComponentActivity() {
             super.onBackPressed()
         }
     }
+<<<<<<< HEAD
+=======
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String?>,
+        grantResults: IntArray,
+        deviceId: Int
+    ) {
+    }
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 }
 
 private val activityVisibleFlow by lazy { MutableStateFlow(0) }
@@ -281,6 +299,10 @@ fun AccessRestrictedSettingsDlg() {
         }
     }
     val accessRestrictedSettingsShow by accessRestrictedSettingsShowFlow.collectAsState()
+<<<<<<< HEAD
+=======
+    val mainVm = LocalMainViewModel.current
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     val navController = LocalNavController.current
     val currentDestination by navController.currentDestinationAsState()
     val isA11yPage = currentDestination?.route == AuthA11YPageDestination.route
@@ -304,7 +326,11 @@ fun AccessRestrictedSettingsDlg() {
             confirmButton = {
                 TextButton({
                     accessRestrictedSettingsShowFlow.value = false
+<<<<<<< HEAD
                     navController.toDestinationsNavigator().navigate(AuthA11YPageDestination)
+=======
+                    mainVm.navigatePage(AuthA11YPageDestination)
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                 }) {
                     Text(text = "解除")
                 }

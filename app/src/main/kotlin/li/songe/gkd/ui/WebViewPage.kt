@@ -49,6 +49,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import li.songe.gkd.META
+<<<<<<< HEAD
+=======
+import li.songe.gkd.MainActivity
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.data.Value
 import li.songe.gkd.ui.component.updateDialogOptions
 import li.songe.gkd.ui.local.LocalMainViewModel
@@ -210,6 +214,7 @@ private const val DOC_CONFIG_URL =
     "https://registry.npmmirror.com/@gkd-kit/docs/latest/files/_config.json"
 
 private const val DEBUG_JS_TEXT = """
+<<<<<<< HEAD
 <script>
 (function () {
     document.write(
@@ -220,6 +225,10 @@ private const val DEBUG_JS_TEXT = """
     document.write('<scr' + 'ipt>eruda.init();</scr' + 'ipt>');
 })();
 </script>
+=======
+<script src="https://registry.npmmirror.com/eruda/latest/files"></script>
+<script>eruda.init();</script>
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 """
 
 
@@ -229,7 +238,11 @@ private data class DocConfig(
     val htmlUrlMap: Map<String, String>
 )
 
+<<<<<<< HEAD
 private class GkdWebViewClient : AccompanistWebViewClient() {
+=======
+private class GkdWebViewClient() : AccompanistWebViewClient() {
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
         super.onPageStarted(view, url, favicon)
     }
@@ -239,8 +252,18 @@ private class GkdWebViewClient : AccompanistWebViewClient() {
     }
 
     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+<<<<<<< HEAD
         if (request != null && request.url.host != "gkd.li") {
             openUri(request.url.toString())
+=======
+        val uri = request?.url
+        if (uri != null && uri.host != "gkd.li") {
+            if (uri.scheme == "gkd") {
+                (view?.context as? MainActivity)?.mainVm?.handleGkdUri(uri)
+            } else {
+                openUri(uri)
+            }
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
             return true
         }
         return super.shouldOverrideUrlLoading(view, request)

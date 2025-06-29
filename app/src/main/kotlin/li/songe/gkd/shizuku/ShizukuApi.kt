@@ -55,9 +55,20 @@ fun initShizuku() {
             if (pkgManager != null && userManager != null) {
                 val otherUsers = userManager.compatGetUsers()
                     .filter { it.id != 0 }.sortedBy { it.id }
+<<<<<<< HEAD
                 otherUserMapFlow.value = otherUsers.associate { it.id to it }
                 allPackageInfoMapFlow.value = otherUsers
                     .map { it.id to pkgManager.compatGetInstalledPackages(0L, it.id) }
+=======
+                otherUserMapFlow.value = otherUsers.associateBy { it.id }
+                allPackageInfoMapFlow.value = otherUsers
+                    .map {
+                        it.id to pkgManager.compatGetInstalledPackages(
+                            PackageManager.MATCH_UNINSTALLED_PACKAGES.toLong(),
+                            it.id
+                        )
+                    }
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                     .associate { it }
             } else {
                 otherUserMapFlow.value = emptyMap()

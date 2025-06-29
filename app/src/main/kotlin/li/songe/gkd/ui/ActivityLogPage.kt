@@ -13,7 +13,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+<<<<<<< HEAD
 import androidx.compose.foundation.lazy.rememberLazyListState
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Delete
@@ -25,12 +28,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+<<<<<<< HEAD
 import androidx.compose.material3.TopAppBarDefaults
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+<<<<<<< HEAD
 import androidx.compose.runtime.key
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,6 +59,10 @@ import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.FixedTimeText
 import li.songe.gkd.ui.component.LocalNumberCharWidth
 import li.songe.gkd.ui.component.measureNumberTextWidth
+<<<<<<< HEAD
+=======
+import li.songe.gkd.ui.component.useListScrollState
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.local.LocalNavController
 import li.songe.gkd.ui.style.EmptyHeight
@@ -72,10 +85,16 @@ fun ActivityLogPage() {
 
     val logCount by vm.logCountFlow.collectAsState()
     val list = vm.pagingDataFlow.collectAsLazyPagingItems()
+<<<<<<< HEAD
     val listState = key(list.itemCount > 0) { rememberLazyListState() }
 
     val timeTextWidth = measureNumberTextWidth(MaterialTheme.typography.bodySmall)
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+=======
+    val (scrollBehavior, listState) = useListScrollState(list.itemCount > 0)
+    val timeTextWidth = measureNumberTextWidth(MaterialTheme.typography.bodySmall)
+
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
         TopAppBar(
             scrollBehavior = scrollBehavior,

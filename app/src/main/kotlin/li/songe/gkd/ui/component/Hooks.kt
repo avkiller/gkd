@@ -1,14 +1,34 @@
 package li.songe.gkd.ui.component
 
 import androidx.compose.animation.core.AnimationConstants.DefaultDurationMillis
+<<<<<<< HEAD
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+=======
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.key
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+<<<<<<< HEAD
+=======
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Density
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.delay
 import li.songe.gkd.data.RawSubscription
 import li.songe.gkd.util.map
@@ -51,3 +71,24 @@ private fun useAutoFocus(): FocusRequester {
 
 @Composable
 fun Modifier.autoFocus() = focusRequester(useAutoFocus())
+<<<<<<< HEAD
+=======
+
+@Composable
+fun useListScrollState(k1: Any?, k2: Any? = null): Pair<TopAppBarScrollBehavior, LazyListState> {
+    // key 函数的依赖变化时, compose 将重置 key 函数那行代码之后所有代码的状态, 因此需要需要将 key 作用域限定在 Composable fun 内
+    val scrollBehavior = key(k1, k2) { TopAppBarDefaults.enterAlwaysScrollBehavior() }
+    val listState = key(k1, k2) { rememberLazyListState() }
+    return scrollBehavior to listState
+}
+
+@Composable
+fun Modifier.textSize(
+    style: TextStyle = LocalTextStyle.current,
+    density: Density = LocalDensity.current,
+): Modifier {
+    val fontSizeDp = density.run { style.fontSize.toDp() }
+    val lineHeightDp = density.run { style.lineHeight.toDp() }
+    return height(lineHeightDp).width(fontSizeDp)
+}
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

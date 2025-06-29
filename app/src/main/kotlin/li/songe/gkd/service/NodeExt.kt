@@ -1,6 +1,10 @@
 package li.songe.gkd.service
 
 import android.accessibilityservice.AccessibilityService
+<<<<<<< HEAD
+=======
+import android.os.Build
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import li.songe.selector.initDefaultTypeInfo
@@ -73,3 +77,19 @@ fun AccessibilityNodeInfo.isExpired(expiryMillis: Long): Boolean {
 }
 
 val typeInfo by lazy { initDefaultTypeInfo().globalType }
+<<<<<<< HEAD
+=======
+
+val AccessibilityNodeInfo.compatChecked: Boolean?
+    get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+        when (checked) {
+            AccessibilityNodeInfo.CHECKED_STATE_TRUE -> true
+            AccessibilityNodeInfo.CHECKED_STATE_FALSE -> false
+            AccessibilityNodeInfo.CHECKED_STATE_PARTIAL -> null
+            else -> null
+        }
+    } else {
+        @Suppress("DEPRECATION")
+        isChecked
+    }
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

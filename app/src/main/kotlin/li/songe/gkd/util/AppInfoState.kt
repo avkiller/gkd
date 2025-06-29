@@ -96,8 +96,12 @@ private val packageReceiver by lazy {
 
 private fun getPkgInfo(appId: String): PackageInfo? {
     return try {
+<<<<<<< HEAD
         // flags=0 : only get basic info
         app.packageManager.getPackageInfo(appId, 0)
+=======
+        app.packageManager.getPackageInfo(appId, PackageManager.MATCH_UNINSTALLED_PACKAGES)
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     } catch (_: PackageManager.NameNotFoundException) {
         null
     }
@@ -129,17 +133,30 @@ suspend fun initOrResetAppInfoCache() = updateAppMutex.withLock {
     val oldMap = userAppInfoMapFlow.value
     val appMap = userAppInfoMapFlow.value.toMutableMap()
     withContext(Dispatchers.IO) {
+<<<<<<< HEAD
         app.packageManager.getInstalledPackages(0)
+=======
+        app.packageManager.getInstalledPackages(PackageManager.MATCH_UNINSTALLED_PACKAGES)
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
             .forEach { packageInfo ->
                 appMap[packageInfo.packageName] = packageInfo.toAppInfo()
             }
     }
     if (!canQueryPkgState.updateAndGet() || appMap.getMayQueryPkgNoAccess()) {
         withContext(Dispatchers.IO) {
+<<<<<<< HEAD
             app.packageManager.queryIntentActivities(
                 Intent(Intent.ACTION_MAIN),
                 0
             ).map { it.activityInfo.packageName }.toSet().forEach { appId ->
+=======
+            arrayOf(Intent.ACTION_MAIN, Intent.ACTION_VIEW).map { action ->
+                app.packageManager.queryIntentActivities(
+                    Intent(action),
+                    PackageManager.MATCH_DISABLED_COMPONENTS,
+                )
+            }.flatten().map { it.activityInfo.packageName }.toSet().forEach { appId ->
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                 if (!appMap.contains(appId)) {
                     getPkgInfo(appId)?.let {
                         appMap[appId] = it.toAppInfo()

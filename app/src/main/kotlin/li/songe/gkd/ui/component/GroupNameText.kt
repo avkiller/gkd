@@ -5,12 +5,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.Icon
+<<<<<<< HEAD
+=======
+import androidx.compose.material3.LocalContentColor
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+<<<<<<< HEAD
+=======
+import androidx.compose.ui.graphics.takeOrElse
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.TextStyle
@@ -43,6 +51,7 @@ fun GroupNameText(
                 append(text)
             }
         }
+<<<<<<< HEAD
         val fontSize = style.fontSize
         val inlineContent = remember(fontSize, clickDisabled) {
             mapOf(
@@ -50,6 +59,15 @@ fun GroupNameText(
                     placeholder = Placeholder(
                         width = fontSize,
                         height = fontSize,
+=======
+        val textColor = color.takeOrElse { style.color.takeOrElse { LocalContentColor.current } }
+        val inlineContent = remember(style, clickDisabled, textColor) {
+            mapOf(
+                "icon" to InlineTextContent(
+                    placeholder = Placeholder(
+                        width = style.fontSize,
+                        height = style.lineHeight,
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                         placeholderVerticalAlign = PlaceholderVerticalAlign.Center
                     )
                 ) {
@@ -61,6 +79,10 @@ fun GroupNameText(
                             }
                             .fillMaxSize(),
                         contentDescription = null,
+<<<<<<< HEAD
+=======
+                        tint = textColor
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                     )
                 }
             )

@@ -2,18 +2,33 @@ package li.songe.gkd.service
 
 import android.content.ComponentName
 import android.provider.Settings
+<<<<<<< HEAD
 import com.blankj.utilcode.util.LogUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+=======
+import android.view.accessibility.AccessibilityNodeInfo
+import com.blankj.utilcode.util.LogUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.updateAndGet
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import li.songe.gkd.META
 import li.songe.gkd.app
 import li.songe.gkd.appScope
 import li.songe.gkd.data.ActionLog
+<<<<<<< HEAD
 import li.songe.gkd.data.ActivityLog
 import li.songe.gkd.data.AppRule
+=======
+import li.songe.gkd.data.ActionResult
+import li.songe.gkd.data.ActivityLog
+import li.songe.gkd.data.AppRule
+import li.songe.gkd.data.AttrInfo
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.data.GlobalRule
 import li.songe.gkd.data.ResetMatchType
 import li.songe.gkd.data.ResolvedRule
@@ -211,6 +226,7 @@ fun updateDefaultInputAppId() {
     }
 }
 
+<<<<<<< HEAD
 val clickLogMutex by lazy { Mutex() }
 suspend fun insertClickLog(rule: ResolvedRule) {
     val ctime = System.currentTimeMillis()
@@ -219,6 +235,21 @@ suspend fun insertClickLog(rule: ResolvedRule) {
         val actionLog = ActionLog(
             appId = topActivityFlow.value.appId,
             activityId = topActivityFlow.value.activityId,
+=======
+private val clickLogMutex by lazy { Mutex() }
+fun addActionLog(
+    rule: ResolvedRule,
+    topActivity: TopActivity,
+    target: AccessibilityNodeInfo,
+    actionResult: ActionResult,
+) = appScope.launchTry(Dispatchers.IO) {
+    val ctime = System.currentTimeMillis()
+    clickLogMutex.withLock {
+        val actionCount = actionCountFlow.updateAndGet { it + 1 }
+        val actionLog = ActionLog(
+            appId = topActivity.appId,
+            activityId = topActivity.activityId,
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
             subsId = rule.subsItem.id,
             subsVersion = rule.rawSubs.version,
             groupKey = rule.g.group.key,
@@ -231,8 +262,21 @@ suspend fun insertClickLog(rule: ResolvedRule) {
             ctime = ctime,
         )
         DbSet.actionLogDao.insert(actionLog)
+<<<<<<< HEAD
         if (actionCountFlow.value % 100 == 0L) {
             DbSet.actionLogDao.deleteKeepLatest()
         }
     }
 }
+=======
+        if (actionCount % 100 == 0L) {
+            DbSet.actionLogDao.deleteKeepLatest()
+        }
+    }
+    LogUtils.d(
+        rule.statusText(),
+        AttrInfo.info2data(target, 0, 0),
+        actionResult
+    )
+}.let {}
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

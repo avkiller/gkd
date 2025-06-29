@@ -3,6 +3,7 @@ name: Build-Apk
 on:
   workflow_dispatch:
 
+<<<<<<< HEAD
   # push:
   #   branches:
   #     - '**'
@@ -15,6 +16,15 @@ env:
   # NDK_VERSION: "r28"
   TAG_NAME: "nightly"
   VERSION: "1.10.4"
+=======
+  push:
+    branches:
+      - '**'
+    paths-ignore:
+      - 'LICENSE'
+      - '*.md'
+      - '.github/**'
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 
 jobs:
   build:
@@ -41,17 +51,22 @@ jobs:
           echo GKD_KEY_PASSWORD='${{ secrets.GKD_KEY_PASSWORD }}' >> gradle.properties
 
       - run: chmod 777 ./gradlew
+<<<<<<< HEAD
       - run: ./gradlew app:assembleGkd
 
       - uses: actions/upload-artifact@v4
         with:
           name: outputs
           path: app/build/outputs
+=======
+      - run: ./gradlew app:assembleGkdRelease
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 
       - uses: actions/upload-artifact@v4
         with:
           name: release
           path: app/build/outputs/apk/gkd/release
+<<<<<<< HEAD
           
       - name: Get tag version
         run: |
@@ -94,3 +109,5 @@ jobs:
           files: |
             app/build/outputs/apk/gkd/release/gkd-${{ env.VERSION }}.apk
 
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

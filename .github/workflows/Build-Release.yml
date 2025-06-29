@@ -1,11 +1,17 @@
 name: Build-Release
 
 on:
+<<<<<<< HEAD
   workflow_dispatch:
   
   # push:
   #   tags:
   #     - v*
+=======
+  push:
+    tags:
+      - v*
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 
 jobs:
   build:
@@ -43,8 +49,13 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
+<<<<<<< HEAD
           name: outputs
           path: app/build/outputs
+=======
+          name: release
+          path: app/build/outputs/apk/gkd/release
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 
       - uses: actions/upload-artifact@v4
         with:
@@ -63,8 +74,13 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
+<<<<<<< HEAD
           name: outputs
           path: outputs
+=======
+          name: release
+          path: release
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 
       - uses: actions/download-artifact@v4
         with:
@@ -87,6 +103,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
+<<<<<<< HEAD
           asset_path: outputs/apk/gkd/release/app-gkd-release.apk
           asset_name: gkd-${{ github.ref_name }}.apk
           asset_content_type: application/vnd.android.package-archive
@@ -101,3 +118,8 @@ jobs:
           asset_path: outputs.zip
           asset_name: outputs-${{ github.ref_name }}.zip
           asset_content_type: application/zip
+=======
+          asset_path: release/app-gkd-release.apk
+          asset_name: gkd-${{ github.ref_name }}.apk
+          asset_content_type: application/vnd.android.package-archive
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
