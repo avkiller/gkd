@@ -1,14 +1,6 @@
 package li.songe.gkd.ui.component
 
 import androidx.compose.animation.core.AnimationConstants.DefaultDurationMillis
-<<<<<<< HEAD
-<<<<<<< HEAD
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-=======
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
@@ -20,27 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.key
-<<<<<<< HEAD
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Density
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.Density
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.delay
 import li.songe.gkd.data.RawSubscription
 import li.songe.gkd.util.map
@@ -83,11 +62,6 @@ private fun useAutoFocus(): FocusRequester {
 
 @Composable
 fun Modifier.autoFocus() = focusRequester(useAutoFocus())
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 
 @Composable
 fun useListScrollState(k1: Any?, k2: Any? = null): Pair<TopAppBarScrollBehavior, LazyListState> {
@@ -105,9 +79,4 @@ fun Modifier.textSize(
     val fontSizeDp = density.run { style.fontSize.toDp() }
     val lineHeightDp = density.run { style.lineHeight.toDp() }
     return height(lineHeightDp).width(fontSizeDp)
-<<<<<<< HEAD
 }
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-}
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

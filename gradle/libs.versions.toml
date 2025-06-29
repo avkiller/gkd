@@ -1,25 +1,10 @@
 [versions]
-<<<<<<< HEAD
-<<<<<<< HEAD
-kotlin = "2.1.21"
-ksp = "2.1.21-2.0.1"
-android = "8.10.1"
-compose = "1.8.2"
-rikka = "4.4.0"
-room = "2.7.1"
-=======
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 kotlin = "2.2.0"
 ksp = "2.2.0-2.0.2"
 android = "8.11.0"
 compose = "1.8.3"
 rikka = "4.4.0"
 room = "2.7.2"
-<<<<<<< HEAD
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 paging = "3.3.6"
 ktor = "3.1.3"
 destinations = "2.2.0"
@@ -74,25 +59,11 @@ destinations_ksp = { module = "io.github.raamcosta.compose-destinations:ksp", ve
 coil_compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil_network = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 coil_gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil" }
-<<<<<<< HEAD
-<<<<<<< HEAD
-reorderable = "sh.calvin.reorderable:reorderable:2.4.3"
-exp4j = "net.objecthunter:exp4j:0.4.8"
-toaster = "com.github.getActivity:Toaster:12.8"
-permissions = "com.github.getActivity:XXPermissions:23.0"
-json5 = "li.songe:json5:0.3.4"
-=======
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 reorderable = "sh.calvin.reorderable:reorderable:2.5.1"
 exp4j = "net.objecthunter:exp4j:0.4.8"
 toaster = "com.github.getActivity:Toaster:13.0"
 permissions = "com.github.getActivity:XXPermissions:23.0"
 json5 = "li.songe:json5:0.3.5"
-<<<<<<< HEAD
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 utilcodex = "com.blankj:utilcodex:1.31.1"
 activityResultLauncher = "com.github.DylanCaiCoding:ActivityResultLauncher:1.1.2"
 floatingBubbleView = "io.github.torrydo:floating-bubble-view:0.6.5"

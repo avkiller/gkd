@@ -10,14 +10,7 @@ import kotlinx.coroutines.flow.flattenConcat
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 import li.songe.gkd.data.SubsConfig
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-import li.songe.gkd.data.SubsConfig
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.db.DbSet
 import li.songe.gkd.ui.component.ShowGroupState
 import li.songe.gkd.ui.component.toGroupState
@@ -162,11 +155,6 @@ class AppConfigVm(stateHandle: SavedStateHandle) : ViewModelExt() {
         selectedDataSetFlow.value = getAllSelectedDataSet() - selectedDataSetFlow.value
     }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     val focusGroupFlow = args.focusLog?.let {
         MutableStateFlow<Triple<Long, String?, Int>?>(
             Triple(
@@ -177,10 +165,6 @@ class AppConfigVm(stateHandle: SavedStateHandle) : ViewModelExt() {
         )
     }
 
-<<<<<<< HEAD
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     init {
         viewModelScope.launch {
             appUsedSubsIdsFlow.collect {

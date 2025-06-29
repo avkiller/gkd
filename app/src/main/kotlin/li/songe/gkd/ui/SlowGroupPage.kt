@@ -30,13 +30,6 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.destinations.SubsAppGroupListPageDestination
 import com.ramcosta.composedestinations.generated.destinations.SubsGlobalGroupListPageDestination
-<<<<<<< HEAD
-<<<<<<< HEAD
-import com.ramcosta.composedestinations.utils.toDestinationsNavigator
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.updateDialogOptions
 import li.songe.gkd.ui.local.LocalMainViewModel
@@ -102,17 +95,7 @@ fun SlowGroupPage() {
                 SlowGroupCard(
                     modifier = Modifier
                         .clickable(onClick = throttle {
-<<<<<<< HEAD
-<<<<<<< HEAD
-                            navController
-                                .toDestinationsNavigator()
-                                .navigate(
-=======
                             mainVm.navigatePage(
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-                            mainVm.navigatePage(
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                                     SubsGlobalGroupListPageDestination(
                                         rule.subsItem.id,
                                         group.key
@@ -131,17 +114,7 @@ fun SlowGroupPage() {
                 SlowGroupCard(
                     modifier = Modifier
                         .clickable(onClick = throttle {
-<<<<<<< HEAD
-<<<<<<< HEAD
-                            navController
-                                .toDestinationsNavigator()
-                                .navigate(
-=======
                             mainVm.navigatePage(
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-                            mainVm.navigatePage(
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                                     SubsAppGroupListPageDestination(
                                         rule.subsItem.id,
                                         rule.app.id,

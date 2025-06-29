@@ -12,13 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-<<<<<<< HEAD
-<<<<<<< HEAD
-import androidx.compose.foundation.lazy.rememberLazyListState
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -33,24 +26,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-<<<<<<< HEAD
-<<<<<<< HEAD
-import androidx.compose.material3.TopAppBarDefaults
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-<<<<<<< HEAD
-<<<<<<< HEAD
-import androidx.compose.runtime.key
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -69,13 +48,6 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.destinations.SubsAppGroupListPageDestination
 import com.ramcosta.composedestinations.generated.destinations.SubsGlobalGroupListPageDestination
-<<<<<<< HEAD
-<<<<<<< HEAD
-import com.ramcosta.composedestinations.utils.toDestinationsNavigator
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import li.songe.gkd.data.ActionLog
@@ -91,14 +63,7 @@ import li.songe.gkd.ui.component.LocalNumberCharWidth
 import li.songe.gkd.ui.component.TowLineText
 import li.songe.gkd.ui.component.animateListItem
 import li.songe.gkd.ui.component.measureNumberTextWidth
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 import li.songe.gkd.ui.component.useListScrollState
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-import li.songe.gkd.ui.component.useListScrollState
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.ui.component.useSubs
 import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.local.LocalMainViewModel
@@ -124,26 +89,11 @@ fun ActionLogPage(
     val mainVm = LocalMainViewModel.current
     val navController = LocalNavController.current
     val vm = viewModel<ActionLogVm>()
-<<<<<<< HEAD
-<<<<<<< HEAD
-    val actionDataItems = vm.pagingDataFlow.collectAsLazyPagingItems()
-    val listState = key(actionDataItems.itemCount > 0) { rememberLazyListState() }
-
-    val timeTextWidth = measureNumberTextWidth(MaterialTheme.typography.bodySmall)
-
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-=======
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 
     val actionDataItems = vm.pagingDataFlow.collectAsLazyPagingItems()
     val (scrollBehavior, listState) = useListScrollState(actionDataItems.itemCount > 0)
     val timeTextWidth = measureNumberTextWidth(MaterialTheme.typography.bodySmall)
 
-<<<<<<< HEAD
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
         TopAppBar(
             scrollBehavior = scrollBehavior,
@@ -219,13 +169,6 @@ fun ActionLogPage(
                 ) { i ->
                     val item = actionDataItems[i] ?: return@items
                     val lastItem = if (i > 0) actionDataItems[i - 1] else null
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                     ActionLogCard(
                         modifier = Modifier.animateListItem(this),
                         i = i,
@@ -379,15 +322,7 @@ private fun ActionLogDialog(
     actionLog: ActionLog,
     onDismissRequest: () -> Unit,
 ) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    val navController = LocalNavController.current
-=======
     val mainVm = LocalMainViewModel.current
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-    val mainVm = LocalMainViewModel.current
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     val scope = rememberCoroutineScope()
     val subsConfig = remember(actionLog) {
         (if (actionLog.groupType == SubsConfig.AppGroupType) {
@@ -415,33 +350,13 @@ private fun ActionLogDialog(
                 onClick = {
                     onDismissRequest()
                     if (actionLog.groupType == SubsConfig.AppGroupType) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-                        navController
-                            .toDestinationsNavigator()
-                            .navigate(
-=======
                         mainVm.navigatePage(
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-                        mainVm.navigatePage(
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                                 SubsAppGroupListPageDestination(
                                     actionLog.subsId, actionLog.appId, actionLog.groupKey
                                 )
                             )
                     } else if (actionLog.groupType == SubsConfig.GlobalGroupType) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-                        navController
-                            .toDestinationsNavigator()
-                            .navigate(
-=======
                         mainVm.navigatePage(
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-                        mainVm.navigatePage(
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                                 SubsGlobalGroupListPageDestination(
                                     actionLog.subsId, actionLog.groupKey
                                 )

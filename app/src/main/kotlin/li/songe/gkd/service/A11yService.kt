@@ -361,14 +361,7 @@ private fun A11yService.useMatchRule() {
             if (rule.status != RuleStatus.StatusOk) break
             val actionResult = rule.performAction(context, target)
             if (actionResult.result) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
                 val topActivity = topActivityFlow.value
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-                val topActivity = topActivityFlow.value
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                 rule.trigger()
                 scope.launch(A11yService.actionThread) {
                     delay(300)
@@ -377,20 +370,7 @@ private fun A11yService.useMatchRule() {
                     }
                 }
                 showActionToast(context)
-<<<<<<< HEAD
-<<<<<<< HEAD
-                appScope.launchTry(Dispatchers.IO) {
-                    insertClickLog(rule)
-                    LogUtils.d(
-                        rule.statusText(), AttrInfo.info2data(target, 0, 0), actionResult
-                    )
-                }
-=======
                 addActionLog(rule, topActivity, target, actionResult)
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-                addActionLog(rule, topActivity, target, actionResult)
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
             }
         }
         checkFutureJob()

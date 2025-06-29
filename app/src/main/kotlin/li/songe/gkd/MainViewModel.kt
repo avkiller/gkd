@@ -2,14 +2,7 @@ package li.songe.gkd
 
 import android.content.ComponentName
 import android.content.Intent
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 import android.net.Uri
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-import android.net.Uri
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import android.os.Build
 import android.service.quicksettings.TileService
 import android.webkit.URLUtil
@@ -55,18 +48,8 @@ import li.songe.gkd.util.clearCache
 import li.songe.gkd.util.client
 import li.songe.gkd.util.componentName
 import li.songe.gkd.util.launchTry
-<<<<<<< HEAD
-<<<<<<< HEAD
-import li.songe.gkd.util.map
-import li.songe.gkd.util.openUri
-=======
 import li.songe.gkd.util.openUri
 import li.songe.gkd.util.openWeChatScaner
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-import li.songe.gkd.util.openUri
-import li.songe.gkd.util.openWeChatScaner
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.util.storeFlow
 import li.songe.gkd.util.subsFolder
 import li.songe.gkd.util.subsItemsFlow
@@ -198,20 +181,6 @@ class MainViewModel : ViewModel() {
         navController.navigate(direction.route)
     }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-    fun handleIntent(intent: Intent) = viewModelScope.launchTry(Dispatchers.Main) {
-        LogUtils.d(intent)
-        val uri = intent.data?.normalizeScheme()
-        if (uri != null && uri.scheme == "gkd" && uri.host == "page") {
-            delay(200)
-            when (uri.path) {
-                "/1" -> navigatePage(AdvancedPageDestination)
-                "/2" -> navigatePage(SnapshotPageDestination())
-            }
-=======
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     fun handleGkdUri(uri: Uri) {
         val notFoundToast = { toast("未知URI\n${uri}") }
         when (uri.host) {
@@ -237,10 +206,6 @@ class MainViewModel : ViewModel() {
         if (uri?.scheme == "gkd") {
             delay(200)
             handleGkdUri(uri)
-<<<<<<< HEAD
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
         } else if (uri != null && intent.getStringExtra("source") == OpenFileActivity::class.qualifiedName) {
             toast("加载导入中...")
             tabFlow.value = subsNav
@@ -298,17 +263,5 @@ class MainViewModel : ViewModel() {
                 }
             }
         }
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-        viewModelScope.launch {
-            storeFlow.map(viewModelScope) { s -> s.log2FileSwitch }.collect {
-                LogUtils.getConfig().isLog2FileSwitch = it
-            }
-        }
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     }
 }

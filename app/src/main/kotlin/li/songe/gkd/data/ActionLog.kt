@@ -12,23 +12,11 @@ import androidx.room.Query
 import androidx.room.Update
 import androidx.room.migration.AutoMigrationSpec
 import kotlinx.coroutines.flow.Flow
-<<<<<<< HEAD
-<<<<<<< HEAD
-import li.songe.gkd.util.format
-import li.songe.gkd.util.getShowActivityId
-
-=======
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.serialization.Serializable
 import li.songe.gkd.util.format
 import li.songe.gkd.util.getShowActivityId
 
 @Serializable
-<<<<<<< HEAD
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 @Entity(
     tableName = "action_log",
 )

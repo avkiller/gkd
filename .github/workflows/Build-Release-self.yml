@@ -1,0 +1,114 @@
+name: Build-Release
+
+on:
+  push:
+    tags:
+      - v*
+  workflow_dispatch:
+env:
+  TAG_NAME: "nightly"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get tag version
+        run: |
+          # 如果是手动触发 (workflow_dispatch)
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            # 获取所有 Tag（确保包含远程 Tag）
+            git fetch --tags
+            # 按版本号排序获取最新 Tag（兼容语义化版本）
+            LATEST_TAG=$(git tag --sort=-v:refname | head -n 1 || echo "nightly")
+
+          else
+           # 原有逻辑：从推送的 Tag 中提取版本号
+           TAG_VERSION="${GITHUB_REF##*/}"
+        
+          fi
+
+          # 将信息写入环境变量
+          echo "TAG_NAME=$LATEST_TAG" >> $GITHUB_ENV
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_CACHE_ENCRYPTION_KEY }}
+
+      - name: write gkd secrets info
+        run: |
+          echo ${{ secrets.GKD_STORE_FILE_BASE64 }} | base64 --decode > ${{ github.workspace }}/gkd.jks
+          echo GKD_STORE_FILE='${{ github.workspace }}/gkd.jks' >> gradle.properties
+          echo GKD_STORE_PASSWORD='${{ secrets.GKD_STORE_PASSWORD }}' >> gradle.properties
+          echo GKD_KEY_ALIAS='${{ secrets.GKD_KEY_ALIAS }}' >> gradle.properties
+          echo GKD_KEY_PASSWORD='${{ secrets.GKD_KEY_PASSWORD }}' >> gradle.properties
+
+      - name: write play secrets info
+        if: false
+        run: |
+          echo ${{ secrets.PLAY_STORE_FILE_BASE64 }} | base64 --decode > ${{ github.workspace }}/play.jks
+          echo PLAY_STORE_FILE='${{ github.workspace }}/play.jks' >> gradle.properties
+          echo PLAY_STORE_PASSWORD='${{ secrets.PLAY_STORE_PASSWORD }}' >> gradle.properties
+          echo PLAY_KEY_ALIAS='${{ secrets.PLAY_KEY_ALIAS }}' >> gradle.properties
+          echo PLAY_KEY_PASSWORD='${{ secrets.PLAY_KEY_PASSWORD }}' >> gradle.properties
+
+      - run: chmod 777 ./gradlew
+      - run: ./gradlew app:assembleGkdRelease
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: app/build/outputs/apk/gkd/release
+
+      - uses: actions/upload-artifact@v4
+        if: false
+        with:
+          name: playRelease
+          path: app/build/outputs/bundle/playRelease
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CHANGELOG.md
+          path: CHANGELOG.md
+
+  release:
+    needs: build
+    permissions: write-all
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+          path: release
+
+      - uses: actions/download-artifact@v4
+        if: false
+        with:
+          name: CHANGELOG.md
+
+      - run: ls -R
+
+      - id: create_release
+        if: false
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          body_path: ./CHANGELOG.md
+          prerelease: ${{ contains(github.ref_name, 'beta') }}
+
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release/app-gkd-release.apk
+          asset_name: gkd-${{ github.ref_name }}.apk
+          asset_content_type: application/vnd.android.package-archive

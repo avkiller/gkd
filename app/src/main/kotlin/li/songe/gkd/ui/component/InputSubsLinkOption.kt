@@ -19,13 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.DialogProperties
 import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
-<<<<<<< HEAD
-<<<<<<< HEAD
-import com.ramcosta.composedestinations.utils.toDestinationsNavigator
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.flow.MutableStateFlow
 import li.songe.gkd.ui.local.LocalMainViewModel
 import li.songe.gkd.util.ShortUrlSet
@@ -99,16 +92,7 @@ class InputSubsLinkOption {
                         Text(text = if (initValue.isNotEmpty()) "修改订阅" else "添加订阅")
                         IconButton(onClick = throttle {
                             cancel()
-<<<<<<< HEAD
-<<<<<<< HEAD
-                            mainVm.navController.toDestinationsNavigator()
-                                .navigate(WebViewPageDestination(initUrl = ShortUrlSet.URL5))
-=======
                             mainVm.navigatePage(WebViewPageDestination(initUrl = ShortUrlSet.URL5))
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-                            mainVm.navigatePage(WebViewPageDestination(initUrl = ShortUrlSet.URL5))
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                         }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Outlined.HelpOutline,

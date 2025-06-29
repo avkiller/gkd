@@ -33,13 +33,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
-<<<<<<< HEAD
-<<<<<<< HEAD
-import com.ramcosta.composedestinations.utils.toDestinationsNavigator
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import li.songe.gkd.META
@@ -145,16 +138,7 @@ fun AuthA11yPage() {
                         modifier = Modifier
                             .padding(cardHorizontalPadding, 0.dp)
                             .clickable {
-<<<<<<< HEAD
-<<<<<<< HEAD
-                                navController.toDestinationsNavigator()
-                                    .navigate(WebViewPageDestination(initUrl = (ShortUrlSet.URL2)))
-=======
                                 mainVm.navigatePage(WebViewPageDestination(initUrl = (ShortUrlSet.URL2)))
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-                                mainVm.navigatePage(WebViewPageDestination(initUrl = (ShortUrlSet.URL2)))
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                             },
                         text = "无法开启无障碍?",
                         style = MaterialTheme.typography.bodySmall,
@@ -243,16 +227,7 @@ fun AuthA11yPage() {
                         modifier = Modifier
                             .padding(cardHorizontalPadding, 0.dp)
                             .clickable(onClick = throttle {
-<<<<<<< HEAD
-<<<<<<< HEAD
-                                navController.toDestinationsNavigator()
-                                    .navigate(WebViewPageDestination(initUrl = ShortUrlSet.URL2))
-=======
                                 mainVm.navigatePage(WebViewPageDestination(initUrl = ShortUrlSet.URL2))
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-                                mainVm.navigatePage(WebViewPageDestination(initUrl = ShortUrlSet.URL2))
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                             }),
                         text = "其他方式解除限制",
                         style = MaterialTheme.typography.bodySmall,

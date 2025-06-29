@@ -38,25 +38,11 @@ import com.ramcosta.composedestinations.generated.destinations.ImagePreviewPageD
 import com.ramcosta.composedestinations.generated.destinations.SubsAppGroupListPageDestination
 import com.ramcosta.composedestinations.generated.destinations.SubsGlobalGroupListPageDestination
 import com.ramcosta.composedestinations.utils.currentDestinationAsState
-<<<<<<< HEAD
-<<<<<<< HEAD
-import com.ramcosta.composedestinations.utils.toDestinationsNavigator
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.delay
 import li.songe.gkd.data.RawSubscription
 import li.songe.gkd.ui.icon.ResetSettings
 import li.songe.gkd.ui.local.LocalDarkTheme
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 import li.songe.gkd.ui.local.LocalMainViewModel
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-import li.songe.gkd.ui.local.LocalMainViewModel
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.ui.local.LocalNavController
 import li.songe.gkd.ui.style.getJson5AnnotatedString
 import li.songe.gkd.util.copyText
@@ -73,14 +59,7 @@ fun RuleGroupDialog(
     onClickResetSwitch: (() -> Unit)?,
     onClickDelete: () -> Unit = {}
 ) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
     val mainVm  = LocalMainViewModel.current
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-    val mainVm  = LocalMainViewModel.current
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     val navController = LocalNavController.current
     AlertDialog(
         onDismissRequest = onDismissRequest,
@@ -185,15 +164,7 @@ fun RuleGroupDialog(
                 if (group.allExampleUrls.isNotEmpty()) {
                     IconButton(onClick = throttle {
                         onDismissRequest()
-<<<<<<< HEAD
-<<<<<<< HEAD
-                        navController.toDestinationsNavigator().navigate(
-=======
                         mainVm.navigatePage(
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-                        mainVm.navigatePage(
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                             ImagePreviewPageDestination(
                                 title = group.name,
                                 uris = group.allExampleUrls.toTypedArray()

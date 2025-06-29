@@ -21,13 +21,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
-<<<<<<< HEAD
-<<<<<<< HEAD
-import androidx.compose.material.icons.outlined.Info
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -48,14 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 import androidx.compose.ui.draw.clip
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-import androidx.compose.ui.draw.clip
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.style.TextDecoration
@@ -64,14 +50,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewModelScope
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
@@ -93,14 +72,7 @@ import li.songe.gkd.util.ISSUES_URL
 import li.songe.gkd.util.PLAY_STORE_URL
 import li.songe.gkd.util.REPOSITORY_URL
 import li.songe.gkd.util.SafeR
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 import li.songe.gkd.util.ShortUrlSet
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-import li.songe.gkd.util.ShortUrlSet
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.util.UpdateChannelOption
 import li.songe.gkd.util.buildLogFile
 import li.songe.gkd.util.checkUpdate
@@ -150,15 +122,7 @@ fun AboutPage() {
                         Text(text = "代码记录")
                         Text(
                             modifier = Modifier.clickable { openUri(META.commitUrl) },
-<<<<<<< HEAD
-<<<<<<< HEAD
-                            text = META.commitId.substring(0, 16),
-=======
                             text = META.tagName ?: META.commitId.substring(0, 16),
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-                            text = META.tagName ?: META.commitId.substring(0, 16),
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                             color = MaterialTheme.colorScheme.primary,
                             style = LocalTextStyle.current.copy(textDecoration = TextDecoration.Underline),
                         )
@@ -198,25 +162,11 @@ fun AboutPage() {
                 },
                 title = { Text(text = "关于") },
                 actions = {
-<<<<<<< HEAD
-<<<<<<< HEAD
-                    IconButton(onClick = throttle(fn = {
-                        showInfoDlg = true
-                    })) {
-                        Icon(
-                            imageVector = Icons.Outlined.Info,
-=======
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                     IconButton(onClick = {
                         showShareAppDlg = true
                     }) {
                         Icon(
                             imageVector = Icons.Default.Share,
-<<<<<<< HEAD
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                             contentDescription = null,
                         )
                     }
@@ -244,13 +194,6 @@ fun AboutPage() {
                         .fillMaxWidth(0.33f)
                         .aspectRatio(1f)
                 )
-<<<<<<< HEAD
-<<<<<<< HEAD
-                Text(text = META.appName, style = MaterialTheme.typography.titleMedium)
-                Text(text = META.versionName, style = MaterialTheme.typography.bodyMedium)
-=======
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                 Column(
                     modifier = Modifier
                         .clip(MaterialTheme.shapes.extraSmall)
@@ -264,10 +207,6 @@ fun AboutPage() {
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
-<<<<<<< HEAD
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                 Spacer(modifier = Modifier.height(32.dp))
             }
 
@@ -280,20 +219,6 @@ fun AboutPage() {
                     .itemPadding()
             ) {
                 Text(
-<<<<<<< HEAD
-<<<<<<< HEAD
-                    text = "开源地址",
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                Text(
-                    text = REPOSITORY_URL,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.secondary,
-                )
-            }
-=======
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                     text = "开源代码",
                     style = MaterialTheme.typography.bodyLarge,
                 )
@@ -317,10 +242,6 @@ fun AboutPage() {
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
             )
-<<<<<<< HEAD
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
             Column(
                 modifier = Modifier
                     .clickable(onClick = throttle {
@@ -333,32 +254,12 @@ fun AboutPage() {
                     text = "问题反馈",
                     style = MaterialTheme.typography.bodyLarge,
                 )
-<<<<<<< HEAD
-<<<<<<< HEAD
-                Text(
-                    text = ISSUES_URL,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.secondary,
-                )
-            }
-            SettingItem(
-                title = "分享应用",
-                imageVector = Icons.Default.Share,
-                onClick = {
-                    showShareAppDlg = true
-=======
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
             }
             SettingItem(
                 title = "导出日志",
                 imageVector = Icons.Default.Share,
                 onClick = {
                     showShareLogDlg = true
-<<<<<<< HEAD
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                 }
             )
             if (META.updateEnabled) {
@@ -371,13 +272,6 @@ fun AboutPage() {
                 )
                 TextSwitch(
                     title = "自动更新",
-<<<<<<< HEAD
-<<<<<<< HEAD
-                    subtitle = "自动检查更新",
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                     checked = store.autoCheckAppUpdate,
                     onCheckedChange = {
                         storeFlow.value = store.copy(
@@ -426,39 +320,6 @@ fun AboutPage() {
                     RotatingLoadingIcon(loading = checkUpdating)
                 }
             }
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-            Text(
-                text = "日志",
-                modifier = Modifier.titleItemPadding(),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-            )
-
-            TextSwitch(
-                title = "保存日志",
-                subtitle = "保存7天日志便于反馈问题",
-                checked = store.log2FileSwitch,
-                onCheckedChange = {
-                    storeFlow.value = store.copy(
-                        log2FileSwitch = it
-                    )
-                })
-
-            if (store.log2FileSwitch) {
-                SettingItem(
-                    title = "导出日志",
-                    imageVector = Icons.Default.Share,
-                    onClick = {
-                        showShareLogDlg = true
-                    }
-                )
-            }
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
             Spacer(modifier = Modifier.height(EmptyHeight))
         }
     }

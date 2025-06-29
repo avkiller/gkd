@@ -16,13 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-<<<<<<< HEAD
-<<<<<<< HEAD
-import androidx.compose.foundation.lazy.rememberLazyListState
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -36,24 +29,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-<<<<<<< HEAD
-<<<<<<< HEAD
-import androidx.compose.material3.TopAppBarDefaults
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-<<<<<<< HEAD
-<<<<<<< HEAD
-import androidx.compose.runtime.key
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -70,13 +49,6 @@ import com.blankj.utilcode.util.UriUtils
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.destinations.ImagePreviewPageDestination
-<<<<<<< HEAD
-<<<<<<< HEAD
-import com.ramcosta.composedestinations.utils.toDestinationsNavigator
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import li.songe.gkd.MainActivity
@@ -90,14 +62,7 @@ import li.songe.gkd.ui.component.FixedTimeText
 import li.songe.gkd.ui.component.LocalNumberCharWidth
 import li.songe.gkd.ui.component.animateListItem
 import li.songe.gkd.ui.component.measureNumberTextWidth
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 import li.songe.gkd.ui.component.useListScrollState
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-import li.songe.gkd.ui.component.useListScrollState
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.local.LocalMainViewModel
 import li.songe.gkd.ui.local.LocalNavController
@@ -122,24 +87,6 @@ fun SnapshotPage() {
     val mainVm = LocalMainViewModel.current
     val navController = LocalNavController.current
     val colorScheme = MaterialTheme.colorScheme
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-    val vm = viewModel<SnapshotVm>()
-    val firstLoading by vm.linkLoad.firstLoadingFlow.collectAsState()
-    val snapshots by vm.snapshotsState.collectAsState()
-
-    var selectedSnapshot by remember {
-        mutableStateOf<Snapshot?>(null)
-    }
-
-    val timeTextWidth = measureNumberTextWidth(MaterialTheme.typography.bodySmall)
-    val listState = key(snapshots.isNotEmpty(), firstLoading) { rememberLazyListState() }
-
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-=======
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     val vm = viewModel<SnapshotVm>()
 
     val firstLoading by vm.linkLoad.firstLoadingFlow.collectAsState()
@@ -148,10 +95,6 @@ fun SnapshotPage() {
     val (scrollBehavior, listState) = useListScrollState(snapshots.isNotEmpty(), firstLoading)
     val timeTextWidth = measureNumberTextWidth(MaterialTheme.typography.bodySmall)
 
-<<<<<<< HEAD
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
         TopAppBar(
             scrollBehavior = scrollBehavior,
@@ -227,17 +170,7 @@ fun SnapshotPage() {
                 Text(
                     text = "查看", modifier = Modifier
                         .clickable(onClick = throttle(fn = vm.viewModelScope.launchAsFn {
-<<<<<<< HEAD
-<<<<<<< HEAD
-                            navController
-                                .toDestinationsNavigator()
-                                .navigate(
-=======
                             mainVm.navigatePage(
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-                            mainVm.navigatePage(
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                                     ImagePreviewPageDestination(
                                         title = snapshotVal.appName,
                                         uri = snapshotVal.screenshotFile.absolutePath,

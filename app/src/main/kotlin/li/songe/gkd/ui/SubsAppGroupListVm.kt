@@ -9,26 +9,11 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import li.songe.gkd.data.RawSubscription
 import li.songe.gkd.db.DbSet
-<<<<<<< HEAD
-<<<<<<< HEAD
-import li.songe.gkd.ui.component.RuleGroupExtVm
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.ui.component.ShowGroupState
 import li.songe.gkd.util.map
 import li.songe.gkd.util.subsIdToRawFlow
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-class SubsAppGroupListVm(stateHandle: SavedStateHandle) : ViewModel(), RuleGroupExtVm {
-=======
 class SubsAppGroupListVm(stateHandle: SavedStateHandle) : ViewModel() {
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-class SubsAppGroupListVm(stateHandle: SavedStateHandle) : ViewModel() {
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     private val args = SubsAppGroupListPageDestination.argsFrom(stateHandle)
 
     val subsRawFlow = subsIdToRawFlow.map(viewModelScope) { s -> s[args.subsItemId] }
@@ -47,12 +32,6 @@ class SubsAppGroupListVm(stateHandle: SavedStateHandle) : ViewModel() {
     val isSelectedModeFlow = MutableStateFlow(false)
     val selectedDataSetFlow = MutableStateFlow(emptySet<ShowGroupState>())
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-    override val focusGroupKeyFlow = MutableStateFlow<Int?>(args.focusGroupKey)
-=======
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     val focusGroupFlow = args.focusGroupKey?.let {
         MutableStateFlow<Triple<Long, String?, Int>?>(
             Triple(
@@ -62,8 +41,4 @@ class SubsAppGroupListVm(stateHandle: SavedStateHandle) : ViewModel() {
             )
         )
     }
-<<<<<<< HEAD
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 }

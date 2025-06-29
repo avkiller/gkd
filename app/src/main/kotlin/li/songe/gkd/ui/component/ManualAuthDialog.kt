@@ -24,13 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
-<<<<<<< HEAD
-<<<<<<< HEAD
-import com.ramcosta.composedestinations.utils.toDestinationsNavigator
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.ui.local.LocalMainViewModel
 import li.songe.gkd.util.ShortUrlSet
 import li.songe.gkd.util.copyText
@@ -89,16 +82,7 @@ fun ManualAuthDialog(
                         modifier = Modifier
                             .clickable(onClick = throttle {
                                 onUpdateShow(false)
-<<<<<<< HEAD
-<<<<<<< HEAD
-                                mainVm.navController.toDestinationsNavigator()
-                                    .navigate(WebViewPageDestination(initUrl = ShortUrlSet.URL3))
-=======
                                 mainVm.navigatePage(WebViewPageDestination(initUrl = ShortUrlSet.URL3))
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-                                mainVm.navigatePage(WebViewPageDestination(initUrl = ShortUrlSet.URL3))
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                             }),
                         text = "运行后授权失败?",
                         style = MaterialTheme.typography.bodySmall,

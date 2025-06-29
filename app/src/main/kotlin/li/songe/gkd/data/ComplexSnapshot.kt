@@ -1,13 +1,6 @@
 package li.songe.gkd.data
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 import android.content.pm.PackageManager
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-import android.content.pm.PackageManager
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.serialization.Serializable
 import li.songe.gkd.app
 
@@ -22,22 +15,12 @@ data class ComplexSnapshot(
     override val screenWidth: Int,
     override val isLandscape: Boolean,
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-    val appInfo: AppInfo? = appId?.let { app.packageManager.getPackageInfo(appId, 0)?.toAppInfo() },
-=======
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     val appInfo: AppInfo? = appId?.let {
         app.packageManager.getPackageInfo(
             appId,
             PackageManager.MATCH_UNINSTALLED_PACKAGES
         )?.toAppInfo()
     },
-<<<<<<< HEAD
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     val gkdAppInfo: AppInfo? = selfAppInfo,
     val device: DeviceInfo = DeviceInfo.instance,
 

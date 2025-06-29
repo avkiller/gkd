@@ -14,13 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-<<<<<<< HEAD
-<<<<<<< HEAD
-import androidx.compose.foundation.lazy.rememberLazyListState
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Apps
@@ -33,24 +26,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-<<<<<<< HEAD
-<<<<<<< HEAD
-import androidx.compose.material3.TopAppBarDefaults
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-<<<<<<< HEAD
-<<<<<<< HEAD
-import androidx.compose.runtime.key
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -63,13 +42,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.blankj.utilcode.util.KeyboardUtils
 import com.ramcosta.composedestinations.generated.destinations.AppConfigPageDestination
-<<<<<<< HEAD
-<<<<<<< HEAD
-import com.ramcosta.composedestinations.utils.toDestinationsNavigator
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.flow.update
 import li.songe.gkd.MainActivity
 import li.songe.gkd.ui.component.AnimatedIcon
@@ -79,18 +51,8 @@ import li.songe.gkd.ui.component.AppNameText
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.QueryPkgAuthCard
 import li.songe.gkd.ui.component.autoFocus
-<<<<<<< HEAD
-<<<<<<< HEAD
-import li.songe.gkd.ui.local.LocalMainViewModel
-import li.songe.gkd.ui.local.LocalNavController
-=======
 import li.songe.gkd.ui.component.useListScrollState
 import li.songe.gkd.ui.local.LocalMainViewModel
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-import li.songe.gkd.ui.component.useListScrollState
-import li.songe.gkd.ui.local.LocalMainViewModel
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.appItemPadding
 import li.songe.gkd.ui.style.menuPadding
@@ -110,13 +72,6 @@ val appListNav = BottomNavItem(
 fun useAppListPage(): ScaffoldExt {
     val context = LocalActivity.current as MainActivity
     val mainVm = LocalMainViewModel.current
-<<<<<<< HEAD
-<<<<<<< HEAD
-    val navController = LocalNavController.current
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     val softwareKeyboardController = LocalSoftwareKeyboardController.current
 
     val vm = viewModel<HomeVm>()
@@ -135,16 +90,7 @@ fun useAppListPage(): ScaffoldExt {
     val appListKey by mainVm.appListKeyFlow.collectAsState()
     val showSearchBar by vm.showSearchBarFlow.collectAsState()
     val resetKey = orderedAppInfos.mapHashCode { it.id }
-<<<<<<< HEAD
-<<<<<<< HEAD
-    val scrollBehavior = key(resetKey, appListKey) { TopAppBarDefaults.enterAlwaysScrollBehavior() }
-    val listState = key(resetKey, appListKey) { rememberLazyListState() }
-=======
     val (scrollBehavior, listState) = useListScrollState(resetKey, appListKey)
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-    val (scrollBehavior, listState) = useListScrollState(resetKey, appListKey)
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     return ScaffoldExt(
         navItem = appListNav,
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -157,14 +103,7 @@ fun useAppListPage(): ScaffoldExt {
                 }
             }
             TopAppBar(scrollBehavior = scrollBehavior, title = {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
                 val firstShowSearchBar = remember { showSearchBar }
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-                val firstShowSearchBar = remember { showSearchBar }
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                 if (showSearchBar) {
                     BackHandler {
                         if (KeyboardUtils.isSoftInputVisible(context)) {
@@ -177,15 +116,7 @@ fun useAppListPage(): ScaffoldExt {
                         value = searchStr,
                         onValueChange = { newValue -> vm.searchStrFlow.value = newValue.trim() },
                         hint = "请输入应用名称/ID",
-<<<<<<< HEAD
-<<<<<<< HEAD
-                        modifier = Modifier.autoFocus()
-=======
                         modifier = if (firstShowSearchBar) Modifier else Modifier.autoFocus(),
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-                        modifier = if (firstShowSearchBar) Modifier else Modifier.autoFocus(),
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                     )
                 } else {
                     Text(
@@ -310,17 +241,7 @@ fun useAppListPage(): ScaffoldExt {
                             if (KeyboardUtils.isSoftInputVisible(context)) {
                                 softwareKeyboardController?.hide()
                             }
-<<<<<<< HEAD
-<<<<<<< HEAD
-                            navController
-                                .toDestinationsNavigator()
-                                .navigate(AppConfigPageDestination(appInfo.id))
-=======
                             mainVm.navigatePage(AppConfigPageDestination(appInfo.id))
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
-=======
-                            mainVm.navigatePage(AppConfigPageDestination(appInfo.id))
->>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                         })
                         .appItemPadding(),
                     horizontalArrangement = Arrangement.SpaceBetween,
