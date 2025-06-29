@@ -57,10 +57,13 @@ import li.songe.gkd.util.toast
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 interface RuleGroupExtVm {
     val focusGroupKeyFlow: MutableStateFlow<Int?>
 }
 
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 @Composable
@@ -74,7 +77,11 @@ fun RuleGroupCard(
     categoryConfig: CategoryConfig?,
     showBottom: Boolean,
 <<<<<<< HEAD
+<<<<<<< HEAD
     vm: RuleGroupExtVm? = null,
+=======
+    focusGroupFlow: MutableStateFlow<Triple<Long, String?, Int>?>? = null,
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
     focusGroupFlow: MutableStateFlow<Triple<Long, String?, Int>?>? = null,
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -89,6 +96,7 @@ fun RuleGroupCard(
 
     var highlighted by remember { mutableStateOf(false) }
 <<<<<<< HEAD
+<<<<<<< HEAD
     if (vm != null) {
         val focusGroupKey = vm.focusGroupKeyFlow.collectAsState()
         LaunchedEffect(group.key, focusGroupKey.value) {
@@ -97,6 +105,8 @@ fun RuleGroupCard(
                 while (isActive && i < 4) {
                     delay(500)
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     if (focusGroupFlow != null) {
         val focusGroup by focusGroupFlow.collectAsState()
         if (subs.id == focusGroup?.first && group.key == focusGroup?.third && if (group is RawSubscription.RawAppGroup) appId == focusGroup?.second else focusGroup?.second == null) {
@@ -111,13 +121,20 @@ fun RuleGroupCard(
                 highlighted = true
                 while (isActive && i < 4) {
                     delay(400)
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                     highlighted = !highlighted
                     i++
                 }
                 highlighted = false
 <<<<<<< HEAD
+<<<<<<< HEAD
                 vm.focusGroupKeyFlow.value = null
+=======
+                focusGroupFlow.value = null
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                 focusGroupFlow.value = null
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

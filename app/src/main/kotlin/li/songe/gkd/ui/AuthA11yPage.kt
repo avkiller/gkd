@@ -34,7 +34,10 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.ramcosta.composedestinations.utils.toDestinationsNavigator
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.Dispatchers
@@ -143,8 +146,12 @@ fun AuthA11yPage() {
                             .padding(cardHorizontalPadding, 0.dp)
                             .clickable {
 <<<<<<< HEAD
+<<<<<<< HEAD
                                 navController.toDestinationsNavigator()
                                     .navigate(WebViewPageDestination(initUrl = (ShortUrlSet.URL2)))
+=======
+                                mainVm.navigatePage(WebViewPageDestination(initUrl = (ShortUrlSet.URL2)))
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                                 mainVm.navigatePage(WebViewPageDestination(initUrl = (ShortUrlSet.URL2)))
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -237,8 +244,12 @@ fun AuthA11yPage() {
                             .padding(cardHorizontalPadding, 0.dp)
                             .clickable(onClick = throttle {
 <<<<<<< HEAD
+<<<<<<< HEAD
                                 navController.toDestinationsNavigator()
                                     .navigate(WebViewPageDestination(initUrl = ShortUrlSet.URL2))
+=======
+                                mainVm.navigatePage(WebViewPageDestination(initUrl = ShortUrlSet.URL2))
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                                 mainVm.navigatePage(WebViewPageDestination(initUrl = ShortUrlSet.URL2))
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

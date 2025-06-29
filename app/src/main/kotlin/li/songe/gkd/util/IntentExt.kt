@@ -5,6 +5,10 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import android.net.Uri
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import android.net.Uri
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -77,12 +81,15 @@ fun Context.tryStartActivity(intent: Intent) {
         e.printStackTrace()
         LogUtils.d("tryStartActivity", e)
 <<<<<<< HEAD
+<<<<<<< HEAD
         // 在某些模拟器上/特定设备 ActivityNotFoundException
         toast(e.message ?: e.stackTraceToString())
     }
 }
 
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
         toast("跳转失败\n" + (e.message ?: e.stackTraceToString()))
     }
 }
@@ -98,6 +105,9 @@ fun openWeChatScaner() {
     app.tryStartActivity(intent)
 }
 
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 fun openA11ySettings() {
     val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
@@ -114,13 +124,19 @@ fun openUri(uri: String) {
         return
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
     val intent = Intent(Intent.ACTION_VIEW, u)
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     openUri(u)
 }
 
 fun openUri(uri: Uri) {
     val intent = Intent(Intent.ACTION_VIEW, uri)
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     app.tryStartActivity(intent)
@@ -133,7 +149,11 @@ fun openApp(appId: String) {
         app.tryStartActivity(intent)
     } else {
 <<<<<<< HEAD
+<<<<<<< HEAD
         toast("请检查此应用是否安装")
+=======
+        toast("请检查此应用是否安装或禁用")
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
         toast("请检查此应用是否安装或禁用")
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

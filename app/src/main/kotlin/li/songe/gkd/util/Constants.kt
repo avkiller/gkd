@@ -30,6 +30,11 @@ object ShortUrlSet {
     const val URL8 = "https://gkd.li?r=8"
     const val URL9 = "https://gkd.li?r=9"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    const val URL10 = "https://gkd.li?r=10"
+    const val URL11 = "https://gkd.li?r=11"
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
     const val URL10 = "https://gkd.li?r=10"
     const val URL11 = "https://gkd.li?r=11"

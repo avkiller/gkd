@@ -15,6 +15,7 @@ data class GitInfo(
     val commitTime: String,
     val tagName: String?,
 <<<<<<< HEAD
+<<<<<<< HEAD
 )
 
 val gitInfo by lazy {
@@ -36,6 +37,8 @@ val gitInfo by lazy {
         println("app: $this")
     }
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 ) {
     val pairList = listOf(
         GitInfo::commitId,
@@ -73,6 +76,9 @@ val debugSuffixPairList by lazy {
                 }
             }
         }
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 }
 
@@ -85,13 +91,17 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.ksp)
 <<<<<<< HEAD
+<<<<<<< HEAD
     alias(libs.plugins.rikka.refine)
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 }
 
 android {
     namespace = "li.songe.gkd"
+<<<<<<< HEAD
 <<<<<<< HEAD
     compileSdk = project.properties["android_compileSdk"].toString().toInt()
     buildToolsVersion = project.properties["android_buildToolsVersion"].toString()
@@ -102,6 +112,8 @@ android {
 
         applicationId = "com.fireworld.gkd"
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     compileSdk = project.properties["android.compileSdk"].toString().toInt()
     buildToolsVersion = project.properties["android.buildToolsVersion"].toString()
 
@@ -110,6 +122,9 @@ android {
         targetSdk = project.properties["android.targetSdk"].toString().toInt()
 
         applicationId = "li.songe.gkd"
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
         versionCode = 65
         versionName = "1.10.4"
@@ -127,6 +142,7 @@ android {
         }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         manifestPlaceholders["commitId"] = gitInfo?.commitId ?: "unknown"
         manifestPlaceholders["commitTime"] = gitInfo?.commitTime?.let { it + "000" } ?: "0"
     }
@@ -134,17 +150,23 @@ android {
     lint {}
 
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
         gitInfo.pairList.onEach { (key, value) ->
             manifestPlaceholders[key] = value ?: ""
         }
     }
 
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     buildFeatures {
         compose = true
         aidl = true
     }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     val gkdSigningConfig = if (project.hasProperty("GKD_STORE_FILE")) {
         signingConfigs.create("gkd") {
@@ -156,6 +178,8 @@ android {
     } else {
         signingConfigs.getByName("debug")
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     if (!project.hasProperty("GKD_STORE_FILE")) {
         error("GKD_STORE_FILE is missing")
     }
@@ -164,6 +188,9 @@ android {
         storePassword = project.properties["GKD_STORE_PASSWORD"] as String
         keyAlias = project.properties["GKD_KEY_ALIAS"] as String
         keyPassword = project.properties["GKD_KEY_PASSWORD"] as String
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     }
 
@@ -181,8 +208,13 @@ android {
     buildTypes {
         all {
 <<<<<<< HEAD
+<<<<<<< HEAD
             if (gitInfo?.tagName == null) {
                 versionNameSuffix = "-${gitInfo?.commitId?.substring(0, 7) ?: "unknown"}"
+=======
+            if (gitInfo.tagName == null) {
+                versionNameSuffix = "-${gitInfo.commitId.substring(0, 7)}"
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
             if (gitInfo.tagName == null) {
                 versionNameSuffix = "-${gitInfo.commitId.substring(0, 7)}"
@@ -194,11 +226,17 @@ android {
             isShrinkResources = true
             isDebuggable = false
 <<<<<<< HEAD
+<<<<<<< HEAD
             setProguardFiles(
                 listOf(
                     // /sdk/tools/proguard/proguard-android-optimize.txt
                     getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
                 )
+=======
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -210,6 +248,7 @@ android {
             signingConfig = gkdSigningConfig
             applicationIdSuffix = ".debug"
 <<<<<<< HEAD
+<<<<<<< HEAD
 
             // add "debug" suffix
             listOf(
@@ -220,6 +259,10 @@ android {
                 "float_button" to "悬浮按钮",
             ).forEach {
                 resValue("string", it.first, it.second + "-debug")
+=======
+            debugSuffixPairList.onEach { (key, value) ->
+                resValue("string", key, "$value-debug")
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
             debugSuffixPairList.onEach { (key, value) ->
                 resValue("string", key, "$value-debug")
@@ -246,6 +289,7 @@ android {
         }
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -253,6 +297,8 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.majorVersion
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     val androidJvmTarget = project.properties["android.jvmTarget"].toString()
     compileOptions {
         sourceCompatibility = JavaVersion.toVersion(androidJvmTarget)
@@ -260,6 +306,9 @@ android {
     }
     kotlinOptions {
         jvmTarget = androidJvmTarget
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
         freeCompilerArgs += listOf(
             "-opt-in=kotlin.RequiresOptIn",
@@ -304,7 +353,11 @@ composeCompiler {
     reportsDestination = layout.buildDirectory.dir("compose_compiler")
     stabilityConfigurationFiles.addAll(
 <<<<<<< HEAD
+<<<<<<< HEAD
         project.layout.projectDirectory.file("../stability_config.conf"),
+=======
+        rootProject.layout.projectDirectory.file("stability_config.conf"),
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
         rootProject.layout.projectDirectory.file("stability_config.conf"),
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -389,7 +442,11 @@ dependencies {
 
     implementation(libs.kevinnzouWebview)
 <<<<<<< HEAD
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 }
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

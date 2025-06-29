@@ -4,6 +4,10 @@ import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import androidx.compose.foundation.clickable
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import androidx.compose.foundation.clickable
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -21,6 +25,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -55,9 +63,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ramcosta.composedestinations.generated.destinations.ActionLogPageDestination
 import com.ramcosta.composedestinations.generated.destinations.ActivityLogPageDestination
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.ramcosta.composedestinations.generated.destinations.AuthA11YPageDestination
 import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
 import com.ramcosta.composedestinations.utils.toDestinationsNavigator
+=======
+import com.ramcosta.composedestinations.generated.destinations.AppConfigPageDestination
+import com.ramcosta.composedestinations.generated.destinations.AuthA11YPageDestination
+import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import com.ramcosta.composedestinations.generated.destinations.AppConfigPageDestination
 import com.ramcosta.composedestinations.generated.destinations.AuthA11YPageDestination
@@ -74,7 +88,12 @@ import li.songe.gkd.service.ManageService
 import li.songe.gkd.service.switchA11yService
 import li.songe.gkd.ui.component.GroupNameText
 <<<<<<< HEAD
+<<<<<<< HEAD
 import li.songe.gkd.ui.local.LocalNavController
+=======
+import li.songe.gkd.ui.component.textSize
+import li.songe.gkd.ui.local.LocalMainViewModel
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import li.songe.gkd.ui.component.textSize
 import li.songe.gkd.ui.local.LocalMainViewModel
@@ -95,7 +114,11 @@ val controlNav = BottomNavItem(label = "主页", icon = Icons.Outlined.Home)
 fun useControlPage(): ScaffoldExt {
     val context = LocalActivity.current as MainActivity
 <<<<<<< HEAD
+<<<<<<< HEAD
     val navController = LocalNavController.current
+=======
+    val mainVm = LocalMainViewModel.current
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
     val mainVm = LocalMainViewModel.current
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -114,7 +137,11 @@ fun useControlPage(): ScaffoldExt {
             }, actions = {
                 IconButton(onClick = throttle {
 <<<<<<< HEAD
+<<<<<<< HEAD
                     navController.toDestinationsNavigator().navigate(AuthA11YPageDestination)
+=======
+                    mainVm.navigatePage(AuthA11YPageDestination)
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                     mainVm.navigatePage(AuthA11YPageDestination)
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -149,6 +176,7 @@ fun useControlPage(): ScaffoldExt {
                     Switch(
                         checked = a11yRunning,
 <<<<<<< HEAD
+<<<<<<< HEAD
                         onCheckedChange = throttle(vm.viewModelScope.launchAsFn<Boolean> { newEnabled ->
                             if (writeSecureSettings || !newEnabled) {
                                 switchA11yService()
@@ -156,11 +184,16 @@ fun useControlPage(): ScaffoldExt {
                                 navController.toDestinationsNavigator()
                                     .navigate(AuthA11YPageDestination)
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                         onCheckedChange = throttle(vm.viewModelScope.launchAsFn { newEnabled ->
                             if (writeSecureSettings || !newEnabled) {
                                 switchA11yService()
                             } else {
                                 mainVm.navigatePage(AuthA11YPageDestination)
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                             }
                         }),
@@ -199,8 +232,12 @@ fun useControlPage(): ScaffoldExt {
                 imageVector = Icons.Default.History,
                 onClick = {
 <<<<<<< HEAD
+<<<<<<< HEAD
                     navController.toDestinationsNavigator()
                         .navigate(ActionLogPageDestination())
+=======
+                    mainVm.navigatePage(ActionLogPageDestination())
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                     mainVm.navigatePage(ActionLogPageDestination())
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -214,8 +251,12 @@ fun useControlPage(): ScaffoldExt {
                     imageVector = Icons.Outlined.Layers,
                     onClick = {
 <<<<<<< HEAD
+<<<<<<< HEAD
                         navController.toDestinationsNavigator()
                             .navigate(ActivityLogPageDestination)
+=======
+                        mainVm.navigatePage(ActivityLogPageDestination)
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                         mainVm.navigatePage(ActivityLogPageDestination)
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -229,8 +270,12 @@ fun useControlPage(): ScaffoldExt {
                 imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
                 onClick = {
 <<<<<<< HEAD
+<<<<<<< HEAD
                     navController.toDestinationsNavigator()
                         .navigate(WebViewPageDestination(initUrl = HOME_PAGE_URL))
+=======
+                    mainVm.navigatePage(WebViewPageDestination(initUrl = HOME_PAGE_URL))
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                     mainVm.navigatePage(WebViewPageDestination(initUrl = HOME_PAGE_URL))
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -311,6 +356,10 @@ private fun IconTextCard(
 @Composable
 private fun ServerStatusCard(vm: HomeVm) {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    val mainVm = LocalMainViewModel.current
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
     val mainVm = LocalMainViewModel.current
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -323,10 +372,13 @@ private fun ServerStatusCard(vm: HomeVm) {
         onClick = {}
     ) {
 <<<<<<< HEAD
+<<<<<<< HEAD
         IconTextCard(
             imageVector = Icons.Outlined.Equalizer
         ) {
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -349,6 +401,9 @@ private fun ServerStatusCard(vm: HomeVm) {
                 tint = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.width(itemHorizontalPadding))
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
             Column(
                 modifier = Modifier.weight(1f)
@@ -372,7 +427,11 @@ private fun ServerStatusCard(vm: HomeVm) {
                 .fillMaxWidth()
                 .padding(
 <<<<<<< HEAD
+<<<<<<< HEAD
                     horizontal = itemVerticalPadding + 8.dp,
+=======
+                    horizontal = itemVerticalPadding,
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                     horizontal = itemVerticalPadding,
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -383,6 +442,10 @@ private fun ServerStatusCard(vm: HomeVm) {
             AnimatedVisibility(subsStatus.isNotEmpty()) {
                 Text(
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+                    modifier = Modifier.padding(horizontal = 8.dp),
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                     modifier = Modifier.padding(horizontal = 8.dp),
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -394,6 +457,7 @@ private fun ServerStatusCard(vm: HomeVm) {
             AnimatedVisibility(latestRecordDesc != null) {
                 val isGlobal by vm.latestRecordIsGlobalFlow.collectAsState()
 <<<<<<< HEAD
+<<<<<<< HEAD
                 GroupNameText(
                     preText = "最近触发: ",
                     isGlobal = isGlobal,
@@ -402,6 +466,8 @@ private fun ServerStatusCard(vm: HomeVm) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                 Row(
                     modifier = Modifier
                         .padding(horizontal = 4.dp)
@@ -436,6 +502,9 @@ private fun ServerStatusCard(vm: HomeVm) {
                         tint = MaterialTheme.colorScheme.primary,
                     )
                 }
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
             }
             Spacer(modifier = Modifier.height(itemVerticalPadding))

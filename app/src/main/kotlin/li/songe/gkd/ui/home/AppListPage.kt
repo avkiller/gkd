@@ -15,7 +15,10 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 <<<<<<< HEAD
+<<<<<<< HEAD
 import androidx.compose.foundation.lazy.rememberLazyListState
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.material.icons.Icons
@@ -31,7 +34,10 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 <<<<<<< HEAD
+<<<<<<< HEAD
 import androidx.compose.material3.TopAppBarDefaults
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.runtime.Composable
@@ -39,7 +45,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 <<<<<<< HEAD
+<<<<<<< HEAD
 import androidx.compose.runtime.key
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.runtime.mutableStateOf
@@ -55,7 +64,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.blankj.utilcode.util.KeyboardUtils
 import com.ramcosta.composedestinations.generated.destinations.AppConfigPageDestination
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.ramcosta.composedestinations.utils.toDestinationsNavigator
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.flow.update
@@ -68,8 +80,13 @@ import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.QueryPkgAuthCard
 import li.songe.gkd.ui.component.autoFocus
 <<<<<<< HEAD
+<<<<<<< HEAD
 import li.songe.gkd.ui.local.LocalMainViewModel
 import li.songe.gkd.ui.local.LocalNavController
+=======
+import li.songe.gkd.ui.component.useListScrollState
+import li.songe.gkd.ui.local.LocalMainViewModel
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import li.songe.gkd.ui.component.useListScrollState
 import li.songe.gkd.ui.local.LocalMainViewModel
@@ -94,7 +111,10 @@ fun useAppListPage(): ScaffoldExt {
     val context = LocalActivity.current as MainActivity
     val mainVm = LocalMainViewModel.current
 <<<<<<< HEAD
+<<<<<<< HEAD
     val navController = LocalNavController.current
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     val softwareKeyboardController = LocalSoftwareKeyboardController.current
@@ -116,8 +136,12 @@ fun useAppListPage(): ScaffoldExt {
     val showSearchBar by vm.showSearchBarFlow.collectAsState()
     val resetKey = orderedAppInfos.mapHashCode { it.id }
 <<<<<<< HEAD
+<<<<<<< HEAD
     val scrollBehavior = key(resetKey, appListKey) { TopAppBarDefaults.enterAlwaysScrollBehavior() }
     val listState = key(resetKey, appListKey) { rememberLazyListState() }
+=======
+    val (scrollBehavior, listState) = useListScrollState(resetKey, appListKey)
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
     val (scrollBehavior, listState) = useListScrollState(resetKey, appListKey)
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -134,6 +158,10 @@ fun useAppListPage(): ScaffoldExt {
             }
             TopAppBar(scrollBehavior = scrollBehavior, title = {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+                val firstShowSearchBar = remember { showSearchBar }
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                 val firstShowSearchBar = remember { showSearchBar }
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -150,7 +178,11 @@ fun useAppListPage(): ScaffoldExt {
                         onValueChange = { newValue -> vm.searchStrFlow.value = newValue.trim() },
                         hint = "请输入应用名称/ID",
 <<<<<<< HEAD
+<<<<<<< HEAD
                         modifier = Modifier.autoFocus()
+=======
+                        modifier = if (firstShowSearchBar) Modifier else Modifier.autoFocus(),
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                         modifier = if (firstShowSearchBar) Modifier else Modifier.autoFocus(),
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -279,9 +311,13 @@ fun useAppListPage(): ScaffoldExt {
                                 softwareKeyboardController?.hide()
                             }
 <<<<<<< HEAD
+<<<<<<< HEAD
                             navController
                                 .toDestinationsNavigator()
                                 .navigate(AppConfigPageDestination(appInfo.id))
+=======
+                            mainVm.navigatePage(AppConfigPageDestination(appInfo.id))
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                             mainVm.navigatePage(AppConfigPageDestination(appInfo.id))
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

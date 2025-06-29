@@ -10,7 +10,10 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 <<<<<<< HEAD
+<<<<<<< HEAD
 import androidx.compose.foundation.lazy.rememberLazyListState
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.material.icons.Icons
@@ -26,7 +29,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 <<<<<<< HEAD
+<<<<<<< HEAD
 import androidx.compose.material3.TopAppBarDefaults
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.runtime.Composable
@@ -54,6 +60,10 @@ import li.songe.gkd.ui.component.TowLineText
 import li.songe.gkd.ui.component.animateListItem
 import li.songe.gkd.ui.component.toGroupState
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import li.songe.gkd.ui.component.useListScrollState
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import li.songe.gkd.ui.component.useListScrollState
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -108,9 +118,12 @@ fun SubsAppGroupListPage(
         vm.isSelectedModeFlow.value = false
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     val (scrollBehavior, listState) = useListScrollState(app.groups.isEmpty())
     if (focusGroupKey != null) {
         LaunchedEffect(null) {
@@ -122,6 +135,9 @@ fun SubsAppGroupListPage(
             }
         }
     }
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
         TopAppBar(scrollBehavior = scrollBehavior, navigationIcon = {
@@ -290,6 +306,7 @@ fun SubsAppGroupListPage(
         }
     }) { contentPadding ->
 <<<<<<< HEAD
+<<<<<<< HEAD
         val listState = rememberLazyListState()
         LaunchedEffect(null) {
             val key = vm.focusGroupKeyFlow.value
@@ -300,6 +317,8 @@ fun SubsAppGroupListPage(
                 }
             }
         }
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
         LazyColumn(
@@ -322,7 +341,11 @@ fun SubsAppGroupListPage(
                     categoryConfig = categoryConfig,
                     showBottom = group !== app.groups.last(),
 <<<<<<< HEAD
+<<<<<<< HEAD
                     vm = vm,
+=======
+                    focusGroupFlow = vm.focusGroupFlow,
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                     focusGroupFlow = vm.focusGroupFlow,
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

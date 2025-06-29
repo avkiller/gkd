@@ -14,7 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 <<<<<<< HEAD
+<<<<<<< HEAD
 import androidx.compose.foundation.lazy.rememberLazyListState
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.material.icons.Icons
@@ -29,7 +32,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 <<<<<<< HEAD
+<<<<<<< HEAD
 import androidx.compose.material3.TopAppBarDefaults
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.runtime.Composable
@@ -37,7 +43,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 <<<<<<< HEAD
+<<<<<<< HEAD
 import androidx.compose.runtime.key
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.ui.Modifier
@@ -60,6 +69,10 @@ import li.songe.gkd.ui.component.FixedTimeText
 import li.songe.gkd.ui.component.LocalNumberCharWidth
 import li.songe.gkd.ui.component.measureNumberTextWidth
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import li.songe.gkd.ui.component.useListScrollState
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import li.songe.gkd.ui.component.useListScrollState
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -86,10 +99,16 @@ fun ActivityLogPage() {
     val logCount by vm.logCountFlow.collectAsState()
     val list = vm.pagingDataFlow.collectAsLazyPagingItems()
 <<<<<<< HEAD
+<<<<<<< HEAD
     val listState = key(list.itemCount > 0) { rememberLazyListState() }
 
     val timeTextWidth = measureNumberTextWidth(MaterialTheme.typography.bodySmall)
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+=======
+    val (scrollBehavior, listState) = useListScrollState(list.itemCount > 0)
+    val timeTextWidth = measureNumberTextWidth(MaterialTheme.typography.bodySmall)
+
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
     val (scrollBehavior, listState) = useListScrollState(list.itemCount > 0)
     val timeTextWidth = measureNumberTextWidth(MaterialTheme.typography.bodySmall)

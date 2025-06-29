@@ -31,7 +31,10 @@ import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.destinations.SubsAppGroupListPageDestination
 import com.ramcosta.composedestinations.generated.destinations.SubsGlobalGroupListPageDestination
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.ramcosta.composedestinations.utils.toDestinationsNavigator
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.ui.component.EmptyText
@@ -100,9 +103,13 @@ fun SlowGroupPage() {
                     modifier = Modifier
                         .clickable(onClick = throttle {
 <<<<<<< HEAD
+<<<<<<< HEAD
                             navController
                                 .toDestinationsNavigator()
                                 .navigate(
+=======
+                            mainVm.navigatePage(
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                             mainVm.navigatePage(
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -125,9 +132,13 @@ fun SlowGroupPage() {
                     modifier = Modifier
                         .clickable(onClick = throttle {
 <<<<<<< HEAD
+<<<<<<< HEAD
                             navController
                                 .toDestinationsNavigator()
                                 .navigate(
+=======
+                            mainVm.navigatePage(
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                             mainVm.navigatePage(
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

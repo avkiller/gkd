@@ -97,8 +97,12 @@ private val packageReceiver by lazy {
 private fun getPkgInfo(appId: String): PackageInfo? {
     return try {
 <<<<<<< HEAD
+<<<<<<< HEAD
         // flags=0 : only get basic info
         app.packageManager.getPackageInfo(appId, 0)
+=======
+        app.packageManager.getPackageInfo(appId, PackageManager.MATCH_UNINSTALLED_PACKAGES)
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
         app.packageManager.getPackageInfo(appId, PackageManager.MATCH_UNINSTALLED_PACKAGES)
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -134,7 +138,11 @@ suspend fun initOrResetAppInfoCache() = updateAppMutex.withLock {
     val appMap = userAppInfoMapFlow.value.toMutableMap()
     withContext(Dispatchers.IO) {
 <<<<<<< HEAD
+<<<<<<< HEAD
         app.packageManager.getInstalledPackages(0)
+=======
+        app.packageManager.getInstalledPackages(PackageManager.MATCH_UNINSTALLED_PACKAGES)
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
         app.packageManager.getInstalledPackages(PackageManager.MATCH_UNINSTALLED_PACKAGES)
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -145,17 +153,23 @@ suspend fun initOrResetAppInfoCache() = updateAppMutex.withLock {
     if (!canQueryPkgState.updateAndGet() || appMap.getMayQueryPkgNoAccess()) {
         withContext(Dispatchers.IO) {
 <<<<<<< HEAD
+<<<<<<< HEAD
             app.packageManager.queryIntentActivities(
                 Intent(Intent.ACTION_MAIN),
                 0
             ).map { it.activityInfo.packageName }.toSet().forEach { appId ->
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
             arrayOf(Intent.ACTION_MAIN, Intent.ACTION_VIEW).map { action ->
                 app.packageManager.queryIntentActivities(
                     Intent(action),
                     PackageManager.MATCH_DISABLED_COMPONENTS,
                 )
             }.flatten().map { it.activityInfo.packageName }.toSet().forEach { appId ->
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                 if (!appMap.contains(appId)) {
                     getPkgInfo(appId)?.let {

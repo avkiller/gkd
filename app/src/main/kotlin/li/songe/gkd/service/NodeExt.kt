@@ -2,6 +2,10 @@ package li.songe.gkd.service
 
 import android.accessibilityservice.AccessibilityService
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import android.os.Build
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import android.os.Build
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -78,7 +82,10 @@ fun AccessibilityNodeInfo.isExpired(expiryMillis: Long): Boolean {
 
 val typeInfo by lazy { initDefaultTypeInfo().globalType }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 
 val AccessibilityNodeInfo.compatChecked: Boolean?
     get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
@@ -91,5 +98,9 @@ val AccessibilityNodeInfo.compatChecked: Boolean?
     } else {
         @Suppress("DEPRECATION")
         isChecked
+<<<<<<< HEAD
+    }
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
     }
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

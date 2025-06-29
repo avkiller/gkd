@@ -7,7 +7,10 @@ import androidx.lifecycle.viewModelScope
 import com.ramcosta.composedestinations.generated.destinations.SubsGlobalGroupExcludePageDestination
 import com.ramcosta.composedestinations.generated.destinations.UpsertRuleGroupPageDestination
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.ramcosta.composedestinations.utils.toDestinationsNavigator
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,7 +28,11 @@ import li.songe.gkd.data.SubsConfig
 import li.songe.gkd.db.DbSet
 import li.songe.gkd.ui.getGlobalGroupChecked
 <<<<<<< HEAD
+<<<<<<< HEAD
 import li.songe.gkd.ui.local.LocalNavController
+=======
+import li.songe.gkd.ui.local.LocalMainViewModel
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import li.songe.gkd.ui.local.LocalMainViewModel
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -228,7 +235,11 @@ class RuleGroupState(
     @Composable
     fun Render() {
 <<<<<<< HEAD
+<<<<<<< HEAD
         val navController = LocalNavController.current
+=======
+        val mainVm = LocalMainViewModel.current
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
         val mainVm = LocalMainViewModel.current
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -256,7 +267,10 @@ class RuleGroupState(
                         )
                     )
 <<<<<<< HEAD
+<<<<<<< HEAD
 //                    editOrAddGroupFlow.value = showGroupState
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                 },
@@ -264,7 +278,11 @@ class RuleGroupState(
                     dismissShow()
                     if (showGroupState.appId == null) {
 <<<<<<< HEAD
+<<<<<<< HEAD
                         navController.toDestinationsNavigator().navigate(
+=======
+                        mainVm.navigatePage(
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                         mainVm.navigatePage(
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

@@ -64,7 +64,10 @@ import com.ramcosta.composedestinations.generated.destinations.SlowGroupPageDest
 import com.ramcosta.composedestinations.generated.destinations.UpsertRuleGroupPageDestination
 import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.ramcosta.composedestinations.utils.toDestinationsNavigator
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.Dispatchers
@@ -79,7 +82,10 @@ import li.songe.gkd.ui.component.TextMenu
 import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.local.LocalMainViewModel
 <<<<<<< HEAD
+<<<<<<< HEAD
 import li.songe.gkd.ui.local.LocalNavController
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.ui.style.EmptyHeight
@@ -116,7 +122,10 @@ fun useSubsManagePage(): ScaffoldExt {
     val context = LocalActivity.current as MainActivity
     val mainVm = LocalMainViewModel.current
 <<<<<<< HEAD
+<<<<<<< HEAD
     val navController = LocalNavController.current
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 
@@ -251,8 +260,13 @@ fun useSubsManagePage(): ScaffoldExt {
                             }
                             if (canDeleteIds.isNotEmpty()) {
 <<<<<<< HEAD
+<<<<<<< HEAD
                                 val text = "确定删除所选 ${canDeleteIds.size} 个订阅?".let {
                                     if (selectedIds.contains(LOCAL_SUBS_ID)) "$it\n\n注: 不包含本地订阅" else it
+=======
+                                val text = "确定删除所选 ${canDeleteIds.size} 个订阅?".let { s ->
+                                    if (selectedIds.contains(LOCAL_SUBS_ID)) "$s\n\n注: 不包含本地订阅" else s
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                                 val text = "确定删除所选 ${canDeleteIds.size} 个订阅?".let { s ->
                                     if (selectedIds.contains(LOCAL_SUBS_ID)) "$s\n\n注: 不包含本地订阅" else s
@@ -285,8 +299,12 @@ fun useSubsManagePage(): ScaffoldExt {
                             ) {
                                 IconButton(onClick = throttle {
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     navController.toDestinationsNavigator()
                                         .navigate(SlowGroupPageDestination)
+=======
+                                    mainVm.navigatePage(SlowGroupPageDestination)
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                                     mainVm.navigatePage(SlowGroupPageDestination)
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -308,7 +326,11 @@ fun useSubsManagePage(): ScaffoldExt {
                                 val scope = rememberCoroutineScope()
                                 val enableMatch by remember {
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     storeFlow.map(scope) { it.enableMatch }
+=======
+                                    storeFlow.map(scope) { s -> s.enableMatch }
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                                     storeFlow.map(scope) { s -> s.enableMatch }
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -525,8 +547,12 @@ fun useSubsManagePage(): ScaffoldExt {
                                                     modifier = Modifier.clickable(onClick = throttle {
                                                         mainVm.dialogFlow.value = null
 <<<<<<< HEAD
+<<<<<<< HEAD
                                                         mainVm.navController.toDestinationsNavigator()
                                                             .navigate(
+=======
+                                                        mainVm.navigatePage(
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                                                         mainVm.navigatePage(
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

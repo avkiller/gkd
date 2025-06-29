@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Add project specific ProGuard rules here.
 # You can control the set of applied configuration files using the
 # proguardFiles setting in build.gradle.
@@ -120,6 +121,11 @@
 # The case when it is not available is hidden in a `try`-`catch`, as well as a check for Android.
 -dontwarn java.lang.ClassValue
 # -kotlinx.coroutines>
+=======
+# http://developer.android.com/guide/developing/tools/proguard.html
+
+-dontwarn **
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 # http://developer.android.com/guide/developing/tools/proguard.html
 

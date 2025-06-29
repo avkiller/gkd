@@ -20,7 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.DialogProperties
 import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.ramcosta.composedestinations.utils.toDestinationsNavigator
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -97,8 +100,12 @@ class InputSubsLinkOption {
                         IconButton(onClick = throttle {
                             cancel()
 <<<<<<< HEAD
+<<<<<<< HEAD
                             mainVm.navController.toDestinationsNavigator()
                                 .navigate(WebViewPageDestination(initUrl = ShortUrlSet.URL5))
+=======
+                            mainVm.navigatePage(WebViewPageDestination(initUrl = ShortUrlSet.URL5))
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                             mainVm.navigatePage(WebViewPageDestination(initUrl = ShortUrlSet.URL5))
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

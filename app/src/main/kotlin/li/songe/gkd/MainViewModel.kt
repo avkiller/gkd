@@ -3,6 +3,10 @@ package li.songe.gkd
 import android.content.ComponentName
 import android.content.Intent
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import android.net.Uri
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import android.net.Uri
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -52,8 +56,13 @@ import li.songe.gkd.util.client
 import li.songe.gkd.util.componentName
 import li.songe.gkd.util.launchTry
 <<<<<<< HEAD
+<<<<<<< HEAD
 import li.songe.gkd.util.map
 import li.songe.gkd.util.openUri
+=======
+import li.songe.gkd.util.openUri
+import li.songe.gkd.util.openWeChatScaner
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import li.songe.gkd.util.openUri
 import li.songe.gkd.util.openWeChatScaner
@@ -190,6 +199,7 @@ class MainViewModel : ViewModel() {
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     fun handleIntent(intent: Intent) = viewModelScope.launchTry(Dispatchers.Main) {
         LogUtils.d(intent)
         val uri = intent.data?.normalizeScheme()
@@ -200,6 +210,8 @@ class MainViewModel : ViewModel() {
                 "/2" -> navigatePage(SnapshotPageDestination())
             }
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     fun handleGkdUri(uri: Uri) {
         val notFoundToast = { toast("未知URI\n${uri}") }
         when (uri.host) {
@@ -225,6 +237,9 @@ class MainViewModel : ViewModel() {
         if (uri?.scheme == "gkd") {
             delay(200)
             handleGkdUri(uri)
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
         } else if (uri != null && intent.getStringExtra("source") == OpenFileActivity::class.qualifiedName) {
             toast("加载导入中...")
@@ -284,12 +299,15 @@ class MainViewModel : ViewModel() {
             }
         }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
         viewModelScope.launch {
             storeFlow.map(viewModelScope) { s -> s.log2FileSwitch }.collect {
                 LogUtils.getConfig().isLog2FileSwitch = it
             }
         }
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     }

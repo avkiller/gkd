@@ -55,8 +55,14 @@ data class AppMeta(
     val channel: String = applicationInfo.metaData.getString("channel")!!,
     val commitId: String = applicationInfo.metaData.getString("commitId")!!,
 <<<<<<< HEAD
+<<<<<<< HEAD
     val commitUrl: String = "https://github.com/gkd-kit/gkd/commit/${commitId}",
     val commitTime: Long = applicationInfo.metaData.getString("commitTime")!!.toLong(),
+=======
+    val commitTime: Long = applicationInfo.metaData.getString("commitTime")!!.toLong(),
+    val tagName: String? = applicationInfo.metaData.getString("tagName")!!.takeIf { it.isNotEmpty() },
+    val commitUrl: String = "https://github.com/gkd-kit/gkd/" + if (tagName != null) "tree/$tagName" else "commit/$commitId",
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
     val commitTime: Long = applicationInfo.metaData.getString("commitTime")!!.toLong(),
     val tagName: String? = applicationInfo.metaData.getString("tagName")!!.takeIf { it.isNotEmpty() },

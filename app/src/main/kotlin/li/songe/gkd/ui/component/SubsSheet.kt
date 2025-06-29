@@ -47,7 +47,10 @@ import com.ramcosta.composedestinations.generated.destinations.SubsAppListPageDe
 import com.ramcosta.composedestinations.generated.destinations.SubsCategoryPageDestination
 import com.ramcosta.composedestinations.generated.destinations.SubsGlobalGroupListPageDestination
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.ramcosta.composedestinations.utils.toDestinationsNavigator
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,7 +58,10 @@ import kotlinx.coroutines.launch
 import li.songe.gkd.META
 import li.songe.gkd.ui.local.LocalMainViewModel
 <<<<<<< HEAD
+<<<<<<< HEAD
 import li.songe.gkd.ui.local.LocalNavController
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.ui.style.EmptyHeight
@@ -88,7 +94,10 @@ fun SubsSheet(
     } else {
         val mainVm = LocalMainViewModel.current
 <<<<<<< HEAD
+<<<<<<< HEAD
         val navController = LocalNavController.current
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
         val subsIdToRaw by subsIdToRawFlow.collectAsState()
@@ -206,9 +215,13 @@ fun SubsSheet(
                                     setSubsId(null)
                                     sheetSubsIdFlow.value = null
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     navController
                                         .toDestinationsNavigator()
                                         .navigate(SubsGlobalGroupListPageDestination(subsItem.id))
+=======
+                                    mainVm.navigatePage(SubsGlobalGroupListPageDestination(subsItem.id))
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                                     mainVm.navigatePage(SubsGlobalGroupListPageDestination(subsItem.id))
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -249,9 +262,13 @@ fun SubsSheet(
                                     setSubsId(null)
                                     sheetSubsIdFlow.value = null
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     navController
                                         .toDestinationsNavigator()
                                         .navigate(SubsAppListPageDestination(subsItem.id))
+=======
+                                    mainVm.navigatePage(SubsAppListPageDestination(subsItem.id))
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                                     mainVm.navigatePage(SubsAppListPageDestination(subsItem.id))
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -293,9 +310,13 @@ fun SubsSheet(
                                     setSubsId(null)
                                     sheetSubsIdFlow.value = null
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     navController
                                         .toDestinationsNavigator()
                                         .navigate(SubsCategoryPageDestination(subsItem.id))
+=======
+                                    mainVm.navigatePage(SubsCategoryPageDestination(subsItem.id))
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                                     mainVm.navigatePage(SubsCategoryPageDestination(subsItem.id))
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -415,8 +436,12 @@ fun SubsSheet(
                         setSubsId(null)
                         sheetSubsIdFlow.value = null
 <<<<<<< HEAD
+<<<<<<< HEAD
                         navController.toDestinationsNavigator()
                             .navigate(ActionLogPageDestination(subsId = subsItem.id))
+=======
+                        mainVm.navigatePage(ActionLogPageDestination(subsId = subsItem.id))
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                         mainVm.navigatePage(ActionLogPageDestination(subsId = subsItem.id))
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

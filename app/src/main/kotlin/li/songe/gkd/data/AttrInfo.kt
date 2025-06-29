@@ -4,6 +4,10 @@ import android.graphics.Rect
 import android.view.accessibility.AccessibilityNodeInfo
 import kotlinx.serialization.Serializable
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import li.songe.gkd.service.compatChecked
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import li.songe.gkd.service.compatChecked
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -20,7 +24,11 @@ data class AttrInfo(
     val focusable: Boolean,
     val checkable: Boolean,
 <<<<<<< HEAD
+<<<<<<< HEAD
     val checked: Boolean,
+=======
+    val checked: Boolean?,
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
     val checked: Boolean?,
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -72,7 +80,11 @@ data class AttrInfo(
                 focusable = node.isFocusable,
                 checkable = node.isCheckable,
 <<<<<<< HEAD
+<<<<<<< HEAD
                 checked = node.isChecked,
+=======
+                checked = node.compatChecked,
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                 checked = node.compatChecked,
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

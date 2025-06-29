@@ -16,7 +16,10 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 <<<<<<< HEAD
+<<<<<<< HEAD
 import androidx.compose.foundation.lazy.rememberLazyListState
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.material.icons.Icons
@@ -38,7 +41,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 <<<<<<< HEAD
+<<<<<<< HEAD
 import androidx.compose.material3.TopAppBarDefaults
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.runtime.Composable
@@ -64,9 +70,15 @@ import com.ramcosta.composedestinations.generated.destinations.ActionLogPageDest
 import com.ramcosta.composedestinations.generated.destinations.SubsAppGroupListPageDestination
 import com.ramcosta.composedestinations.generated.destinations.UpsertRuleGroupPageDestination
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.ramcosta.composedestinations.utils.toDestinationsNavigator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
+=======
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.update
+import li.songe.gkd.data.ActionLog
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
@@ -81,6 +93,10 @@ import li.songe.gkd.ui.component.RuleGroupCard
 import li.songe.gkd.ui.component.animateListItem
 import li.songe.gkd.ui.component.toGroupState
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import li.songe.gkd.ui.component.useListScrollState
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import li.songe.gkd.ui.component.useListScrollState
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -103,6 +119,7 @@ import li.songe.gkd.util.switchItem
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toJson5String
 <<<<<<< HEAD
+<<<<<<< HEAD
 import java.util.Objects
 
 @Destination<RootGraph>(style = ProfileTransitions::class)
@@ -118,6 +135,8 @@ fun AppConfigPage(appId: String) {
     val scrollBehavior = key(resetKey) { TopAppBarDefaults.enterAlwaysScrollBehavior() }
     val listState = key(resetKey) { rememberLazyListState() }
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 
 @Suppress("unused")
 @Destination<RootGraph>(style = ProfileTransitions::class)
@@ -152,6 +171,9 @@ fun AppConfigPage(appId: String, focusLog: ActionLog? = null) {
             }
         }
     }
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 
     val isSelectedMode = vm.isSelectedModeFlow.collectAsState().value
@@ -170,7 +192,10 @@ fun AppConfigPage(appId: String, focusLog: ActionLog? = null) {
         vm.isSelectedModeFlow.value = false
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     Scaffold(
@@ -207,7 +232,11 @@ fun AppConfigPage(appId: String, focusLog: ActionLog? = null) {
                         if (it) {
                             IconButton(
 <<<<<<< HEAD
+<<<<<<< HEAD
                                 enabled = selectedDataSet.any { it.appId != null },
+=======
+                                enabled = selectedDataSet.any { a -> a.appId != null },
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                                 enabled = selectedDataSet.any { a -> a.appId != null },
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -216,7 +245,11 @@ fun AppConfigPage(appId: String, focusLog: ActionLog? = null) {
                                     vm.subsPairsFlow.value.forEach { (entry, groups) ->
                                         groups.forEach { g ->
 <<<<<<< HEAD
+<<<<<<< HEAD
                                             if (g is RawSubscription.RawAppGroup && selectedDataSet.any { entry.subsItem.id == it.subsId && g.key == it.groupKey }) {
+=======
+                                            if (g is RawSubscription.RawAppGroup && selectedDataSet.any { v -> entry.subsItem.id == v.subsId && g.key == v.groupKey }) {
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                                             if (g is RawSubscription.RawAppGroup && selectedDataSet.any { v -> entry.subsItem.id == v.subsId && g.key == v.groupKey }) {
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -250,8 +283,12 @@ fun AppConfigPage(appId: String, focusLog: ActionLog? = null) {
                         } else {
                             IconButton(onClick = throttle {
 <<<<<<< HEAD
+<<<<<<< HEAD
                                 navController.toDestinationsNavigator()
                                     .navigate(ActionLogPageDestination(appId = appId))
+=======
+                                mainVm.navigatePage(ActionLogPageDestination(appId = appId))
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                                 mainVm.navigatePage(ActionLogPageDestination(appId = appId))
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -478,7 +515,12 @@ fun AppConfigPage(appId: String, focusLog: ActionLog? = null) {
                         isSelectedMode = isSelectedMode,
                         isSelected = isSelected,
 <<<<<<< HEAD
+<<<<<<< HEAD
                         onSelectedChange = onSelectedChange
+=======
+                        onSelectedChange = onSelectedChange,
+                        focusGroupFlow = vm.focusGroupFlow,
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                         onSelectedChange = onSelectedChange,
                         focusGroupFlow = vm.focusGroupFlow,

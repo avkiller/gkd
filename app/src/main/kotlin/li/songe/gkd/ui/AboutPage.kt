@@ -22,7 +22,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
 <<<<<<< HEAD
+<<<<<<< HEAD
 import androidx.compose.material.icons.outlined.Info
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import androidx.compose.material3.AlertDialog
@@ -46,6 +49,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import androidx.compose.ui.draw.clip
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import androidx.compose.ui.draw.clip
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -58,6 +65,10 @@ import androidx.lifecycle.viewModelScope
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -83,6 +94,10 @@ import li.songe.gkd.util.PLAY_STORE_URL
 import li.songe.gkd.util.REPOSITORY_URL
 import li.songe.gkd.util.SafeR
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import li.songe.gkd.util.ShortUrlSet
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import li.songe.gkd.util.ShortUrlSet
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -136,7 +151,11 @@ fun AboutPage() {
                         Text(
                             modifier = Modifier.clickable { openUri(META.commitUrl) },
 <<<<<<< HEAD
+<<<<<<< HEAD
                             text = META.commitId.substring(0, 16),
+=======
+                            text = META.tagName ?: META.commitId.substring(0, 16),
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                             text = META.tagName ?: META.commitId.substring(0, 16),
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -180,17 +199,23 @@ fun AboutPage() {
                 title = { Text(text = "关于") },
                 actions = {
 <<<<<<< HEAD
+<<<<<<< HEAD
                     IconButton(onClick = throttle(fn = {
                         showInfoDlg = true
                     })) {
                         Icon(
                             imageVector = Icons.Outlined.Info,
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                     IconButton(onClick = {
                         showShareAppDlg = true
                     }) {
                         Icon(
                             imageVector = Icons.Default.Share,
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                             contentDescription = null,
                         )
@@ -220,9 +245,12 @@ fun AboutPage() {
                         .aspectRatio(1f)
                 )
 <<<<<<< HEAD
+<<<<<<< HEAD
                 Text(text = META.appName, style = MaterialTheme.typography.titleMedium)
                 Text(text = META.versionName, style = MaterialTheme.typography.bodyMedium)
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                 Column(
                     modifier = Modifier
                         .clip(MaterialTheme.shapes.extraSmall)
@@ -236,6 +264,9 @@ fun AboutPage() {
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                 Spacer(modifier = Modifier.height(32.dp))
             }
@@ -250,6 +281,7 @@ fun AboutPage() {
             ) {
                 Text(
 <<<<<<< HEAD
+<<<<<<< HEAD
                     text = "开源地址",
                     style = MaterialTheme.typography.bodyLarge,
                 )
@@ -260,6 +292,8 @@ fun AboutPage() {
                 )
             }
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                     text = "开源代码",
                     style = MaterialTheme.typography.bodyLarge,
                 )
@@ -283,6 +317,9 @@ fun AboutPage() {
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
             )
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
             Column(
                 modifier = Modifier
@@ -297,6 +334,7 @@ fun AboutPage() {
                     style = MaterialTheme.typography.bodyLarge,
                 )
 <<<<<<< HEAD
+<<<<<<< HEAD
                 Text(
                     text = ISSUES_URL,
                     style = MaterialTheme.typography.bodyMedium,
@@ -309,12 +347,17 @@ fun AboutPage() {
                 onClick = {
                     showShareAppDlg = true
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
             }
             SettingItem(
                 title = "导出日志",
                 imageVector = Icons.Default.Share,
                 onClick = {
                     showShareLogDlg = true
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                 }
             )
@@ -329,7 +372,10 @@ fun AboutPage() {
                 TextSwitch(
                     title = "自动更新",
 <<<<<<< HEAD
+<<<<<<< HEAD
                     subtitle = "自动检查更新",
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
                     checked = store.autoCheckAppUpdate,
@@ -381,6 +427,7 @@ fun AboutPage() {
                 }
             }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
             Text(
                 text = "日志",
@@ -408,6 +455,8 @@ fun AboutPage() {
                     }
                 )
             }
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
             Spacer(modifier = Modifier.height(EmptyHeight))

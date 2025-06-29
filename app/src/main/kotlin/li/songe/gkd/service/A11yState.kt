@@ -3,16 +3,22 @@ package li.songe.gkd.service
 import android.content.ComponentName
 import android.provider.Settings
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.blankj.utilcode.util.LogUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import android.view.accessibility.AccessibilityNodeInfo
 import com.blankj.utilcode.util.LogUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.updateAndGet
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -21,13 +27,19 @@ import li.songe.gkd.app
 import li.songe.gkd.appScope
 import li.songe.gkd.data.ActionLog
 <<<<<<< HEAD
+<<<<<<< HEAD
 import li.songe.gkd.data.ActivityLog
 import li.songe.gkd.data.AppRule
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.data.ActionResult
 import li.songe.gkd.data.ActivityLog
 import li.songe.gkd.data.AppRule
 import li.songe.gkd.data.AttrInfo
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import li.songe.gkd.data.GlobalRule
 import li.songe.gkd.data.ResetMatchType
@@ -227,6 +239,7 @@ fun updateDefaultInputAppId() {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 val clickLogMutex by lazy { Mutex() }
 suspend fun insertClickLog(rule: ResolvedRule) {
     val ctime = System.currentTimeMillis()
@@ -236,6 +249,8 @@ suspend fun insertClickLog(rule: ResolvedRule) {
             appId = topActivityFlow.value.appId,
             activityId = topActivityFlow.value.activityId,
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 private val clickLogMutex by lazy { Mutex() }
 fun addActionLog(
     rule: ResolvedRule,
@@ -249,6 +264,9 @@ fun addActionLog(
         val actionLog = ActionLog(
             appId = topActivity.appId,
             activityId = topActivity.activityId,
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
             subsId = rule.subsItem.id,
             subsVersion = rule.rawSubs.version,
@@ -263,12 +281,15 @@ fun addActionLog(
         )
         DbSet.actionLogDao.insert(actionLog)
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (actionCountFlow.value % 100 == 0L) {
             DbSet.actionLogDao.deleteKeepLatest()
         }
     }
 }
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
         if (actionCount % 100 == 0L) {
             DbSet.actionLogDao.deleteKeepLatest()
         }
@@ -279,4 +300,7 @@ fun addActionLog(
         actionResult
     )
 }.let {}
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

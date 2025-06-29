@@ -82,7 +82,10 @@ data class Store(
     val autoClearMemorySubs: Boolean = true,
     val hideSnapshotStatusBar: Boolean = false,
 <<<<<<< HEAD
+<<<<<<< HEAD
     val log2FileSwitch: Boolean = true,
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
     val enableDarkTheme: Boolean? = null,

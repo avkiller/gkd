@@ -50,6 +50,10 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import li.songe.gkd.META
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import li.songe.gkd.MainActivity
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 import li.songe.gkd.MainActivity
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -215,6 +219,7 @@ private const val DOC_CONFIG_URL =
 
 private const val DEBUG_JS_TEXT = """
 <<<<<<< HEAD
+<<<<<<< HEAD
 <script>
 (function () {
     document.write(
@@ -229,6 +234,10 @@ private const val DEBUG_JS_TEXT = """
 <script src="https://registry.npmmirror.com/eruda/latest/files"></script>
 <script>eruda.init();</script>
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
+<script src="https://registry.npmmirror.com/eruda/latest/files"></script>
+<script>eruda.init();</script>
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 """
 
 
@@ -239,7 +248,11 @@ private data class DocConfig(
 )
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 private class GkdWebViewClient : AccompanistWebViewClient() {
+=======
+private class GkdWebViewClient() : AccompanistWebViewClient() {
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 private class GkdWebViewClient() : AccompanistWebViewClient() {
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -253,9 +266,12 @@ private class GkdWebViewClient() : AccompanistWebViewClient() {
 
     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (request != null && request.url.host != "gkd.li") {
             openUri(request.url.toString())
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
         val uri = request?.url
         if (uri != null && uri.host != "gkd.li") {
             if (uri.scheme == "gkd") {
@@ -263,6 +279,9 @@ private class GkdWebViewClient() : AccompanistWebViewClient() {
             } else {
                 openUri(uri)
             }
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
             return true
         }

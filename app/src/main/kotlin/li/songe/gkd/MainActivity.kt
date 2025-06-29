@@ -30,7 +30,10 @@ import com.ramcosta.composedestinations.generated.NavGraphs
 import com.ramcosta.composedestinations.generated.destinations.AuthA11YPageDestination
 import com.ramcosta.composedestinations.utils.currentDestinationAsState
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.ramcosta.composedestinations.utils.toDestinationsNavigator
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.Dispatchers
@@ -163,7 +166,11 @@ class MainActivity : ComponentActivity() {
     private var lastBackPressedTime = 0L
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     @Suppress("OVERRIDE_DEPRECATION")
+=======
+    @Suppress("OVERRIDE_DEPRECATION", "GestureBackNavigation")
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
     @Suppress("OVERRIDE_DEPRECATION", "GestureBackNavigation")
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -177,7 +184,10 @@ class MainActivity : ComponentActivity() {
         }
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -186,6 +196,9 @@ class MainActivity : ComponentActivity() {
         deviceId: Int
     ) {
     }
+<<<<<<< HEAD
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
+=======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 }
 
@@ -300,6 +313,10 @@ fun AccessRestrictedSettingsDlg() {
     }
     val accessRestrictedSettingsShow by accessRestrictedSettingsShowFlow.collectAsState()
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    val mainVm = LocalMainViewModel.current
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
     val mainVm = LocalMainViewModel.current
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -327,7 +344,11 @@ fun AccessRestrictedSettingsDlg() {
                 TextButton({
                     accessRestrictedSettingsShowFlow.value = false
 <<<<<<< HEAD
+<<<<<<< HEAD
                     navController.toDestinationsNavigator().navigate(AuthA11YPageDestination)
+=======
+                    mainVm.navigatePage(AuthA11YPageDestination)
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                     mainVm.navigatePage(AuthA11YPageDestination)
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52

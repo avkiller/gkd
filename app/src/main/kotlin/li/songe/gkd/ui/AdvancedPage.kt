@@ -60,7 +60,10 @@ import com.ramcosta.composedestinations.generated.destinations.ActivityLogPageDe
 import com.ramcosta.composedestinations.generated.destinations.SnapshotPageDestination
 import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.ramcosta.composedestinations.utils.toDestinationsNavigator
+=======
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 import kotlinx.coroutines.Dispatchers
@@ -319,7 +322,11 @@ fun AdvancedPage() {
                 subtitle = "应用界面节点信息及截图",
                 onClick = {
 <<<<<<< HEAD
+<<<<<<< HEAD
                     navController.toDestinationsNavigator().navigate(SnapshotPageDestination)
+=======
+                    mainVm.navigatePage(SnapshotPageDestination)
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                     mainVm.navigatePage(SnapshotPageDestination)
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -420,8 +427,12 @@ fun AdvancedPage() {
                 suffix = "获取教程",
                 onSuffixClick = {
 <<<<<<< HEAD
+<<<<<<< HEAD
                     navController.toDestinationsNavigator()
                         .navigate(WebViewPageDestination(initUrl = (ShortUrlSet.URL1)))
+=======
+                    mainVm.navigatePage(WebViewPageDestination(initUrl = (ShortUrlSet.URL1)))
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                     mainVm.navigatePage(WebViewPageDestination(initUrl = (ShortUrlSet.URL1)))
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -452,7 +463,11 @@ fun AdvancedPage() {
                 title = "界面记录",
                 onClick = {
 <<<<<<< HEAD
+<<<<<<< HEAD
                     navController.toDestinationsNavigator().navigate(ActivityLogPageDestination)
+=======
+                    mainVm.navigatePage(ActivityLogPageDestination)
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
                     mainVm.navigatePage(ActivityLogPageDestination)
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -495,7 +510,11 @@ private val checkShizukuMutex by lazy { Mutex() }
 private fun ShizukuFragment(enabled: Boolean = true) {
     val shizukuStore by shizukuStoreFlow.collectAsState()
 <<<<<<< HEAD
+<<<<<<< HEAD
     val navController = LocalNavController.current
+=======
+    val mainVm = LocalMainViewModel.current
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
     val mainVm = LocalMainViewModel.current
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -505,8 +524,12 @@ private fun ShizukuFragment(enabled: Boolean = true) {
         suffix = "使用说明",
         onSuffixClick = {
 <<<<<<< HEAD
+<<<<<<< HEAD
             navController.toDestinationsNavigator()
                 .navigate(WebViewPageDestination(initUrl = ShortUrlSet.URL7))
+=======
+            mainVm.navigatePage(WebViewPageDestination(initUrl = ShortUrlSet.URL7))
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
             mainVm.navigatePage(WebViewPageDestination(initUrl = ShortUrlSet.URL7))
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -533,8 +556,12 @@ private fun ShizukuFragment(enabled: Boolean = true) {
         suffix = "使用说明",
         onSuffixClick = {
 <<<<<<< HEAD
+<<<<<<< HEAD
             navController.toDestinationsNavigator()
                 .navigate(WebViewPageDestination(initUrl = ShortUrlSet.URL8))
+=======
+            mainVm.navigatePage(WebViewPageDestination(initUrl = ShortUrlSet.URL8))
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
             mainVm.navigatePage(WebViewPageDestination(initUrl = ShortUrlSet.URL8))
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
@@ -562,8 +589,12 @@ private fun ShizukuFragment(enabled: Boolean = true) {
         suffix = "使用说明",
         onSuffixClick = {
 <<<<<<< HEAD
+<<<<<<< HEAD
             navController.toDestinationsNavigator()
                 .navigate(WebViewPageDestination(initUrl = ShortUrlSet.URL9))
+=======
+            mainVm.navigatePage(WebViewPageDestination(initUrl = ShortUrlSet.URL9))
+>>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
 =======
             mainVm.navigatePage(WebViewPageDestination(initUrl = ShortUrlSet.URL9))
 >>>>>>> e09569e3b7493617a264aa7f7a0bd9903daa1b52
