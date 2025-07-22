@@ -1,3 +1,6 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import kotlin.reflect.full.declaredMemberProperties
+
 fun String.runCommand(): String {
     val process = ProcessBuilder(split(" "))
         .redirectErrorStream(true)
@@ -14,25 +17,13 @@ data class GitInfo(
     val commitId: String,
     val commitTime: String,
     val tagName: String?,
-) {
-    val pairList = listOf(
-        GitInfo::commitId,
-        GitInfo::commitTime,
-        GitInfo::tagName,
-    ).map {
-        val key = it.name
-        val value = it.get(this)
-        key to value
-    }
-}
+)
 
-val gitInfo by lazy {
-    GitInfo(
-        commitId = "git rev-parse HEAD".runCommand(),
-        commitTime = "git log -1 --format=%ct".runCommand() + "000",
-        tagName = runCatching { "git describe --tags --exact-match".runCommand() }.getOrNull(),
-    )
-}
+val gitInfo = GitInfo(
+    commitId = "git rev-parse HEAD".runCommand(),
+    commitTime = "git log -1 --format=%ct".runCommand() + "000",
+    tagName = runCatching { "git describe --tags --exact-match".runCommand() }.getOrNull(),
+)
 
 val debugSuffixPairList by lazy {
     javax.xml.parsers.DocumentBuilderFactory
@@ -64,13 +55,13 @@ plugins {
 }
 
 android {
-    namespace = "li.songe.gkd"
-    compileSdk = project.properties["android.compileSdk"].toString().toInt()
-    buildToolsVersion = project.properties["android.buildToolsVersion"].toString()
+    namespace = rootProject.ext["android.namespace"].toString()
+    compileSdk = rootProject.ext["android.compileSdk"] as Int
+    buildToolsVersion = rootProject.ext["android.buildToolsVersion"].toString()
 
     defaultConfig {
-        minSdk = project.properties["android.minSdk"].toString().toInt()
-        targetSdk = project.properties["android.targetSdk"].toString().toInt()
+        minSdk = rootProject.ext["android.minSdk"] as Int
+        targetSdk = rootProject.ext["android.targetSdk"] as Int
 
         applicationId = "com.fireworld.gkd"
         versionCode = 65
@@ -88,8 +79,8 @@ android {
             abiFilters += listOf("arm64-v8a", "x86_64")
         }
 
-        gitInfo.pairList.onEach { (key, value) ->
-            manifestPlaceholders[key] = value ?: ""
+        GitInfo::class.declaredMemberProperties.onEach {
+            manifestPlaceholders[it.name] = it.get(gitInfo) ?: ""
         }
     }
 
@@ -98,22 +89,19 @@ android {
         aidl = true
     }
 
-    if (!project.hasProperty("GKD_STORE_FILE")) {
-        error("GKD_STORE_FILE is missing")
-    }
     val gkdSigningConfig = signingConfigs.create("gkd") {
         storeFile = file(project.properties["GKD_STORE_FILE"] as String)
-        storePassword = project.properties["GKD_STORE_PASSWORD"] as String
-        keyAlias = project.properties["GKD_KEY_ALIAS"] as String
-        keyPassword = project.properties["GKD_KEY_PASSWORD"] as String
+        storePassword = project.properties["GKD_STORE_PASSWORD"].toString()
+        keyAlias = project.properties["GKD_KEY_ALIAS"].toString()
+        keyPassword = project.properties["GKD_KEY_PASSWORD"].toString()
     }
 
     val playSigningConfig = if (project.hasProperty("PLAY_STORE_FILE")) {
         signingConfigs.create("play") {
-            storeFile = file(project.properties["PLAY_STORE_FILE"] as String)
-            storePassword = project.properties["PLAY_STORE_PASSWORD"] as String
-            keyAlias = project.properties["PLAY_KEY_ALIAS"] as String
-            keyPassword = project.properties["PLAY_KEY_PASSWORD"] as String
+            storeFile = file(project.properties["PLAY_STORE_FILE"].toString())
+            storePassword = project.properties["PLAY_STORE_PASSWORD"].toString()
+            keyAlias = project.properties["PLAY_KEY_ALIAS"].toString()
+            keyPassword = project.properties["PLAY_KEY_PASSWORD"].toString()
         }
     } else {
         null
@@ -147,12 +135,10 @@ android {
         create("gkd") {
             isDefault = true
             signingConfig = gkdSigningConfig
-            manifestPlaceholders["updateEnabled"] = true
             resValue("bool", "is_accessibility_tool", "true")
         }
         create("play") {
             signingConfig = playSigningConfig ?: gkdSigningConfig
-            manifestPlaceholders["updateEnabled"] = false
             resValue("bool", "is_accessibility_tool", "false")
         }
         all {
@@ -160,24 +146,9 @@ android {
             manifestPlaceholders["channel"] = name
         }
     }
-    val androidJvmTarget = project.properties["android.jvmTarget"].toString()
     compileOptions {
-        sourceCompatibility = JavaVersion.toVersion(androidJvmTarget)
-        targetCompatibility = JavaVersion.toVersion(androidJvmTarget)
-    }
-    kotlinOptions {
-        jvmTarget = androidJvmTarget
-        freeCompilerArgs += listOf(
-            "-opt-in=kotlin.RequiresOptIn",
-            "-opt-in=kotlinx.coroutines.FlowPreview",
-            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-            "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
-            "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
-            "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi",
-            "-opt-in=androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi",
-            "-opt-in=androidx.compose.ui.ExperimentalComposeUiApi",
-            "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi"
-        )
+        sourceCompatibility = rootProject.ext["android.javaVersion"] as JavaVersion
+        targetCompatibility = rootProject.ext["android.javaVersion"] as JavaVersion
     }
     dependenciesInfo.includeInApk = false
     packagingOptions.resources.excludes += setOf(
@@ -191,6 +162,23 @@ android {
         "**/custom.config.conf",
         "**/custom.config.yaml",
     )
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(rootProject.ext["kotlin.jvmTarget"] as JvmTarget)
+        freeCompilerArgs.addAll(
+            "-opt-in=kotlin.RequiresOptIn",
+            "-opt-in=kotlinx.coroutines.FlowPreview",
+            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+            "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
+            "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
+            "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi",
+            "-opt-in=androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi",
+            "-opt-in=androidx.compose.ui.ExperimentalComposeUiApi",
+            "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi",
+        )
+    }
 }
 
 // https://developer.android.com/jetpack/androidx/releases/room?hl=zh-cn#compiler-options
@@ -216,7 +204,7 @@ composeCompiler {
 dependencies {
     implementation(libs.kotlin.stdlib)
 
-    implementation(project(mapOf("path" to ":selector")))
+    implementation(project(":selector"))
 
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
@@ -239,12 +227,10 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso)
 
-    compileOnly(project(mapOf("path" to ":hidden_api")))
+    compileOnly(project(":hidden_api"))
     implementation(libs.rikka.shizuku.api)
     implementation(libs.rikka.shizuku.provider)
     implementation(libs.lsposed.hiddenapibypass)
-
-    implementation(libs.tencent.mmkv)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

@@ -12,18 +12,17 @@ import li.songe.gkd.appScope
 import li.songe.gkd.data.AppInfo
 import li.songe.gkd.data.otherUserMapFlow
 import li.songe.gkd.data.toAppInfo
+import li.songe.gkd.store.shizukuStoreFlow
 import li.songe.gkd.util.allPackageInfoMapFlow
 import li.songe.gkd.util.launchTry
 import li.songe.gkd.util.otherUserAppInfoMapFlow
-import li.songe.gkd.util.shizukuStoreFlow
 import li.songe.gkd.util.userAppInfoMapFlow
 import rikka.shizuku.Shizuku
 
 fun shizukuCheckGranted(): Boolean {
     val granted = try {
         Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
-    } catch (e: Exception) {
-        e.printStackTrace()
+    } catch (_: Exception) {
         false
     }
     if (!granted) return false

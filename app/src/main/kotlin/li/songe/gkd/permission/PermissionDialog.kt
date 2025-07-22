@@ -1,25 +1,26 @@
 package li.songe.gkd.permission
 
+import android.app.Activity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.yield
 import li.songe.gkd.MainActivity
-import kotlin.coroutines.coroutineContext
+import li.songe.gkd.util.stopCoroutine
 
 data class AuthReason(
     val text: String,
-    val confirm: (() -> Unit)? = null,
-    val renderConfirm: @Composable (() -> (() -> Unit))? = null,
+    val confirm: ((Activity) -> Unit)? = null,
+    val renderConfirm: @Composable (() -> ((Activity) -> Unit))? = null,
 )
 
 @Composable
 fun AuthDialog(authReasonFlow: MutableStateFlow<AuthReason?>) {
     val authAction = authReasonFlow.collectAsState().value
+    val context = LocalActivity.current as MainActivity
     if (authAction != null) {
         AlertDialog(
             title = {
@@ -33,7 +34,7 @@ fun AuthDialog(authReasonFlow: MutableStateFlow<AuthReason?>) {
                 val composeConfirm = authAction.renderConfirm?.invoke()
                 TextButton(onClick = {
                     authReasonFlow.value = null
-                    (composeConfirm ?: authAction.confirm)?.invoke()
+                    (composeConfirm ?: authAction.confirm)?.invoke(context)
                 }) {
                     Text(text = "确认")
                 }
@@ -77,7 +78,6 @@ suspend fun requiredPermission(
 ) {
     val r = checkOrRequestPermission(context, permissionState)
     if (!r) {
-        coroutineContext[Job]?.cancel()
-        yield()
+        stopCoroutine()
     }
 }

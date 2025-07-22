@@ -50,17 +50,16 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewModelScope
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
-import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
 import li.songe.gkd.META
 import li.songe.gkd.MainActivity
 import li.songe.gkd.app
+import li.songe.gkd.store.storeFlow
 import li.songe.gkd.ui.component.RotatingLoadingIcon
 import li.songe.gkd.ui.component.SettingItem
 import li.songe.gkd.ui.component.TextMenu
-import li.songe.gkd.ui.component.TextSwitch
 import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.local.LocalMainViewModel
 import li.songe.gkd.ui.local.LocalNavController
@@ -75,16 +74,13 @@ import li.songe.gkd.util.SafeR
 import li.songe.gkd.util.ShortUrlSet
 import li.songe.gkd.util.UpdateChannelOption
 import li.songe.gkd.util.buildLogFile
-import li.songe.gkd.util.checkUpdate
 import li.songe.gkd.util.findOption
 import li.songe.gkd.util.format
-import li.songe.gkd.util.launchAsFn
 import li.songe.gkd.util.launchTry
 import li.songe.gkd.util.openUri
 import li.songe.gkd.util.saveFileToDownloads
 import li.songe.gkd.util.shareFile
 import li.songe.gkd.util.sharedDir
-import li.songe.gkd.util.storeFlow
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
 import java.io.File
@@ -210,32 +206,37 @@ fun AboutPage() {
                 Spacer(modifier = Modifier.height(32.dp))
             }
 
-            Column(
-                modifier = Modifier
-                    .clickable(onClick = throttle {
-                        mainVm.openUrl(REPOSITORY_URL)
-                    })
-                    .fillMaxWidth()
-                    .itemPadding()
-            ) {
-                Text(
-                    text = "开源代码",
-                    style = MaterialTheme.typography.bodyLarge,
+            SettingItem(
+                imageVector = null,
+                title = "开源代码",
+                onClick = {
+                    mainVm.openUrl(REPOSITORY_URL)
+                },
+            )
+            if (META.isGkdChannel) {
+                SettingItem(
+                    imageVector = null,
+                    title = "捐赠支持",
+                    onClick = {
+                        mainVm.navigateWebPage(ShortUrlSet.URL10)
+                    },
                 )
             }
-            Column(
-                modifier = Modifier
-                    .clickable(onClick = throttle {
-                        mainVm.navigatePage(WebViewPageDestination(ShortUrlSet.URL11))
-                    })
-                    .fillMaxWidth()
-                    .itemPadding()
-            ) {
-                Text(
-                    text = "隐私政策",
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-            }
+            SettingItem(
+                imageVector = null,
+                title = "使用协议",
+                onClick = {
+                    mainVm.navigateWebPage(ShortUrlSet.URL12)
+                },
+            )
+            SettingItem(
+                imageVector = null,
+                title = "隐私政策",
+                onClick = {
+                    mainVm.navigateWebPage(ShortUrlSet.URL11)
+                },
+            )
+
             Text(
                 text = "反馈",
                 modifier = Modifier.titleItemPadding(),
@@ -262,22 +263,12 @@ fun AboutPage() {
                     showShareLogDlg = true
                 }
             )
-            if (META.updateEnabled) {
-                val checkUpdating by mainVm.updateStatus.checkUpdatingFlow.collectAsState()
+            if (mainVm.updateStatus != null) {
                 Text(
                     text = "更新",
                     modifier = Modifier.titleItemPadding(),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.primary,
-                )
-                TextSwitch(
-                    title = "自动更新",
-                    checked = store.autoCheckAppUpdate,
-                    onCheckedChange = {
-                        storeFlow.value = store.copy(
-                            autoCheckAppUpdate = it
-                        )
-                    }
                 )
                 TextMenu(
                     title = "更新渠道",
@@ -296,17 +287,12 @@ fun AboutPage() {
                         storeFlow.update { s -> s.copy(updateChannel = it.value) }
                     }
                 }
-
                 Row(
                     modifier = Modifier
                         .clickable(
-                            onClick = throttle(fn = mainVm.viewModelScope.launchAsFn {
-                                if (mainVm.updateStatus.checkUpdatingFlow.value) return@launchAsFn
-                                val newVersion = mainVm.updateStatus.checkUpdate()
-                                if (newVersion == null) {
-                                    toast("暂无更新")
-                                }
-                            })
+                            onClick = throttle {
+                                mainVm.updateStatus.checkUpdate(true)
+                            }
                         )
                         .fillMaxWidth()
                         .itemPadding(),
@@ -317,7 +303,7 @@ fun AboutPage() {
                         text = "检查更新",
                         style = MaterialTheme.typography.bodyLarge,
                     )
-                    RotatingLoadingIcon(loading = checkUpdating)
+                    RotatingLoadingIcon(loading = mainVm.updateStatus.checkUpdatingFlow.collectAsState().value)
                 }
             }
             Spacer(modifier = Modifier.height(EmptyHeight))

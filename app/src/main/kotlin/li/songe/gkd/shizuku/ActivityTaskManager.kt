@@ -18,8 +18,8 @@ import li.songe.gkd.service.A11yService
 import li.songe.gkd.service.TopActivity
 import li.songe.gkd.service.topActivityFlow
 import li.songe.gkd.service.updateTopActivity
+import li.songe.gkd.store.shizukuStoreFlow
 import li.songe.gkd.util.launchTry
-import li.songe.gkd.util.shizukuStoreFlow
 import li.songe.gkd.util.toast
 import rikka.shizuku.ShizukuBinderWrapper
 import rikka.shizuku.SystemServiceHelper
@@ -126,7 +126,9 @@ val activityTaskManagerFlow by lazy<StateFlow<SafeActivityTaskManager?>> {
     val stateFlow = MutableStateFlow<SafeActivityTaskManager?>(null)
     appScope.launchTry(Dispatchers.IO) {
         shizukuActivityUsedFlow.collect {
-            stateFlow.value?.unregisterTaskStackListener(taskListener)
+            if (shizukuOkState.value) {
+                stateFlow.value?.unregisterTaskStackListener(taskListener)
+            }
             stateFlow.value = if (it) newActivityTaskManager() else null
             stateFlow.value?.registerTaskStackListener(taskListener)
         }

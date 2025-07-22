@@ -1,7 +1,6 @@
 package li.songe.gkd.ui
 
 import android.os.Build
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,11 +35,10 @@ import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import li.songe.gkd.META
-import li.songe.gkd.MainActivity
-import li.songe.gkd.grantPermissionByShizuku
 import li.songe.gkd.permission.writeSecureSettingsState
 import li.songe.gkd.service.A11yService
 import li.songe.gkd.service.fixRestartService
+import li.songe.gkd.store.storeFlow
 import li.songe.gkd.ui.component.AuthButtonGroup
 import li.songe.gkd.ui.component.ManualAuthDialog
 import li.songe.gkd.ui.component.updateDialogOptions
@@ -55,7 +53,6 @@ import li.songe.gkd.util.ShortUrlSet
 import li.songe.gkd.util.launchAsFn
 import li.songe.gkd.util.openA11ySettings
 import li.songe.gkd.util.runCommandByRoot
-import li.songe.gkd.util.storeFlow
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
 
@@ -270,11 +267,11 @@ private fun successAuthExec() {
 
 @Composable
 private fun A11yAuthButtonGroup() {
-    val context = LocalActivity.current as MainActivity
+    val mainVm = LocalMainViewModel.current
     val vm = viewModel<AuthA11yVm>()
     AuthButtonGroup(
         onClickShizuku = vm.viewModelScope.launchAsFn(Dispatchers.IO) {
-            context.grantPermissionByShizuku(a11yCommandText)
+            mainVm.grantPermissionByShizuku(a11yCommandText)
             successAuthExec()
         },
         onClickManual = {

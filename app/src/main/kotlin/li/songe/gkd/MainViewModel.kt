@@ -1,5 +1,6 @@
 package li.songe.gkd
 
+import android.app.Activity
 import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
@@ -12,6 +13,7 @@ import androidx.navigation.NavHostController
 import com.blankj.utilcode.util.LogUtils
 import com.ramcosta.composedestinations.generated.destinations.AdvancedPageDestination
 import com.ramcosta.composedestinations.generated.destinations.SnapshotPageDestination
+import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
 import com.ramcosta.composedestinations.spec.Direction
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
@@ -33,6 +35,11 @@ import li.songe.gkd.debug.FloatingTileService
 import li.songe.gkd.debug.HttpTileService
 import li.songe.gkd.debug.SnapshotTileService
 import li.songe.gkd.permission.AuthReason
+import li.songe.gkd.permission.shizukuOkState
+import li.songe.gkd.service.MatchTileService
+import li.songe.gkd.shizuku.execCommandForResult
+import li.songe.gkd.store.createTextFlow
+import li.songe.gkd.store.storeFlow
 import li.songe.gkd.ui.component.AlertDialogOptions
 import li.songe.gkd.ui.component.InputSubsLinkOption
 import li.songe.gkd.ui.component.RuleGroupState
@@ -43,20 +50,22 @@ import li.songe.gkd.ui.home.controlNav
 import li.songe.gkd.ui.home.subsNav
 import li.songe.gkd.util.LOCAL_SUBS_ID
 import li.songe.gkd.util.UpdateStatus
-import li.songe.gkd.util.checkUpdate
 import li.songe.gkd.util.clearCache
 import li.songe.gkd.util.client
 import li.songe.gkd.util.componentName
 import li.songe.gkd.util.launchTry
 import li.songe.gkd.util.openUri
 import li.songe.gkd.util.openWeChatScaner
-import li.songe.gkd.util.storeFlow
+import li.songe.gkd.util.stopCoroutine
 import li.songe.gkd.util.subsFolder
 import li.songe.gkd.util.subsItemsFlow
 import li.songe.gkd.util.toast
 import li.songe.gkd.util.updateSubsMutex
 import li.songe.gkd.util.updateSubscription
+import rikka.shizuku.Shizuku
 import java.lang.ref.WeakReference
+
+private var tempTermsAccepted = false
 
 class MainViewModel : ViewModel() {
 
@@ -81,9 +90,9 @@ class MainViewModel : ViewModel() {
     val dialogFlow = MutableStateFlow<AlertDialogOptions?>(null)
     val authReasonFlow = MutableStateFlow<AuthReason?>(null)
 
-    val updateStatus = UpdateStatus()
+    val updateStatus = if (META.updateEnabled) UpdateStatus(viewModelScope) else null
 
-    val shizukuErrorFlow = MutableStateFlow(false)
+    val shizukuErrorFlow = MutableStateFlow<Throwable?>(null)
 
     val uploadOptions = UploadOptions(this)
 
@@ -181,6 +190,10 @@ class MainViewModel : ViewModel() {
         navController.navigate(direction.route)
     }
 
+    fun navigateWebPage(url: String) {
+        navigatePage(WebViewPageDestination(url))
+    }
+
     fun handleGkdUri(uri: Uri) {
         val notFoundToast = { toast("未知URI\n${uri}") }
         when (uri.host) {
@@ -218,12 +231,68 @@ class MainViewModel : ViewModel() {
                 intent.getParcelableExtra(Intent.EXTRA_COMPONENT_NAME) as ComponentName?
             } ?: return@launchTry
             delay(200)
-            if (qsTileCpt == HttpTileService::class.componentName || qsTileCpt == FloatingTileService::class.componentName) {
-                navigatePage(AdvancedPageDestination)
-            } else if (qsTileCpt == SnapshotTileService::class.componentName) {
-                navigatePage(SnapshotPageDestination)
+            when (qsTileCpt) {
+                HttpTileService::class.componentName, FloatingTileService::class.componentName -> {
+                    navigatePage(AdvancedPageDestination)
+                }
+
+                SnapshotTileService::class.componentName -> {
+                    navigatePage(SnapshotPageDestination)
+                }
+
+                MatchTileService::class.componentName -> {
+                    tabFlow.value = subsNav
+                }
             }
         }
+    }
+
+    val termsAcceptedFlow by lazy {
+        if (tempTermsAccepted) {
+            MutableStateFlow(true)
+        } else {
+            createTextFlow(
+                key = "terms_accepted",
+                decode = { it == "true" },
+                encode = {
+                    tempTermsAccepted = it
+                    it.toString()
+                },
+                scope = viewModelScope,
+            ).apply {
+                tempTermsAccepted = value
+            }
+        }
+    }
+
+    val githubCookieFlow by lazy {
+        createTextFlow(
+            key = "github_cookie",
+            decode = { it ?: "" },
+            encode = { it },
+            private = true,
+            scope = viewModelScope,
+        )
+    }
+
+    suspend fun grantPermissionByShizuku(command: String) {
+        if (shizukuOkState.stateFlow.value) {
+            try {
+                execCommandForResult(command)
+                return
+            } catch (e: Exception) {
+                toast("运行失败:${e.message}")
+                LogUtils.d(e)
+            }
+        } else {
+            try {
+                Shizuku.requestPermission(Activity.RESULT_OK)
+            } catch (e: Throwable) {
+                LogUtils.d("Shizuku授权错误", e.message)
+                shizukuErrorFlow.value = e
+            }
+        }
+        stopCoroutine()
     }
 
     init {
@@ -253,15 +322,13 @@ class MainViewModel : ViewModel() {
             clearCache()
         }
 
-        if (META.updateEnabled && storeFlow.value.autoCheckAppUpdate) {
-            viewModelScope.launch(Dispatchers.IO) {
-                try {
-                    updateStatus.checkUpdate()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    LogUtils.d(e)
-                }
-            }
+        if (updateStatus != null && termsAcceptedFlow.value) {
+            updateStatus.checkUpdate()
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            // preload
+            githubCookieFlow.value
         }
     }
 }

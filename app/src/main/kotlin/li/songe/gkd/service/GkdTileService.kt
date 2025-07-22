@@ -17,11 +17,11 @@ import li.songe.gkd.accessRestrictedSettingsShowFlow
 import li.songe.gkd.app
 import li.songe.gkd.appScope
 import li.songe.gkd.permission.writeSecureSettingsState
+import li.songe.gkd.store.storeFlow
 import li.songe.gkd.util.OnChangeListen
 import li.songe.gkd.util.OnDestroy
 import li.songe.gkd.util.OnTileClick
 import li.songe.gkd.util.launchTry
-import li.songe.gkd.util.storeFlow
 import li.songe.gkd.util.toast
 import li.songe.gkd.util.useLogLifecycle
 
@@ -115,7 +115,6 @@ fun switchA11yService() = appScope.launchTry(Dispatchers.IO) {
         val newEnableService = !A11yService.isRunning.value
         if (A11yService.isRunning.value) {
             A11yService.instance?.disableSelf()
-            toast("关闭无障碍")
         } else {
             if (!writeSecureSettingsState.updateAndGet()) {
                 toast("请先授予「写入安全设置权限」")
@@ -137,7 +136,6 @@ fun switchA11yService() = appScope.launchTry(Dispatchers.IO) {
                 accessRestrictedSettingsShowFlow.value = true
                 return@launchTry
             }
-            toast("开启无障碍")
         }
         storeFlow.update { it.copy(enableService = newEnableService) }
     }
@@ -167,7 +165,6 @@ fun fixRestartService() = appScope.launchTry(Dispatchers.IO) {
                 accessRestrictedSettingsShowFlow.value = true
                 return@launchTry
             }
-            toast("重启无障碍")
         }
     }
 }
