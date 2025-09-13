@@ -1,9 +1,11 @@
 package li.songe.gkd.ui.home
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,7 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,43 +34,33 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.blankj.utilcode.util.KeyboardUtils
 import com.ramcosta.composedestinations.generated.destinations.AboutPageDestination
 import com.ramcosta.composedestinations.generated.destinations.AdvancedPageDestination
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
-import li.songe.gkd.appScope
 import li.songe.gkd.store.storeFlow
-import li.songe.gkd.ui.component.RotatingLoadingIcon
+import li.songe.gkd.ui.component.CustomOutlinedTextField
 import li.songe.gkd.ui.component.SettingItem
 import li.songe.gkd.ui.component.TextMenu
 import li.songe.gkd.ui.component.TextSwitch
 import li.songe.gkd.ui.component.autoFocus
 import li.songe.gkd.ui.component.updateDialogOptions
-import li.songe.gkd.ui.component.waitResult
-import li.songe.gkd.ui.local.LocalMainViewModel
+import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.style.EmptyHeight
-import li.songe.gkd.ui.style.itemPadding
 import li.songe.gkd.ui.style.titleItemPadding
 import li.songe.gkd.ui.theme.supportDynamicColor
 import li.songe.gkd.util.DarkThemeOption
 import li.songe.gkd.util.findOption
-import li.songe.gkd.util.initOrResetAppInfoCache
-import li.songe.gkd.util.launchAsFn
-import li.songe.gkd.util.launchTry
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
-import li.songe.gkd.util.updateAppMutex
-
-val settingsNav = BottomNavItem(
-    label = "设置", icon = Icons.Outlined.Settings
-)
 
 @Composable
 fun useSettingsPage(): ScaffoldExt {
     val mainVm = LocalMainViewModel.current
+    val activity = LocalActivity.current
     val store by storeFlow.collectAsState()
     val vm = viewModel<HomeVm>()
 
@@ -80,10 +71,9 @@ fun useSettingsPage(): ScaffoldExt {
         mutableStateOf(false)
     }
 
-
     if (showToastInputDlg) {
         var value by remember {
-            mutableStateOf(store.clickToast)
+            mutableStateOf(store.actionToast)
         }
         val maxCharLen = 32
         AlertDialog(
@@ -114,7 +104,10 @@ fun useSettingsPage(): ScaffoldExt {
             onDismissRequest = { showToastInputDlg = false },
             confirmButton = {
                 TextButton(enabled = value.isNotEmpty(), onClick = {
-                    storeFlow.update { it.copy(clickToast = value) }
+                    if (value != storeFlow.value.actionToast) {
+                        storeFlow.update { it.copy(actionToast = value) }
+                        toast("更新成功")
+                    }
                     showToastInputDlg = false
                 }) {
                     Text(
@@ -132,9 +125,8 @@ fun useSettingsPage(): ScaffoldExt {
         )
     }
     if (showNotifTextInputDlg) {
-        var value by remember {
-            mutableStateOf(store.customNotifText)
-        }
+        var titleValue by remember { mutableStateOf(store.customNotifTitle) }
+        var textValue by remember { mutableStateOf(store.customNotifText) }
         AlertDialog(
             properties = DialogProperties(dismissOnClickOutside = false),
             title = {
@@ -145,9 +137,17 @@ fun useSettingsPage(): ScaffoldExt {
                 ) {
                     Text(text = "通知文案")
                     IconButton(onClick = throttle {
+                        KeyboardUtils.hideSoftInput(activity)
+                        showNotifTextInputDlg = false
+                        val confirmAction = {
+                            mainVm.dialogFlow.value = null
+                            showNotifTextInputDlg = true
+                        }
                         mainVm.dialogFlow.updateDialogOptions(
                             title = "文案规则",
-                            text = "通知文案支持变量替换,规则如下\n\${i} 全局规则数\n\${k} 应用数\n\${u} 应用规则组数\n\${n} 触发次数\n\n示例模板\n\${i}全局/\${k}应用/\${u}规则组/\${n}触发\n\n替换结果\n0全局/1应用/2规则组/3触发",
+                            text = "通知文案支持变量替换，规则如下\n\${i} 全局规则数\n\${k} 应用数\n\${u} 应用规则组数\n\${n} 触发次数\n\n示例模板\n\${i}全局/\${k}应用/\${u}规则组/\${n}触发\n\n替换结果\n0全局/1应用/2规则组/3触发",
+                            confirmAction = confirmAction,
+                            onDismissRequest = confirmAction,
                         )
                     }) {
                         Icon(
@@ -158,34 +158,68 @@ fun useSettingsPage(): ScaffoldExt {
                 }
             },
             text = {
-                val maxCharLen = 64
-                OutlinedTextField(
-                    value = value,
-                    placeholder = {
-                        Text(text = "请输入文案内容,支持变量替换")
-                    },
-                    onValueChange = {
-                        value = if (it.length > maxCharLen) it.take(maxCharLen) else it
-                    },
-                    maxLines = 4,
-                    supportingText = {
-                        Text(
-                            text = "${value.length} / $maxCharLen",
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.End,
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .autoFocus()
-                )
+                val titleMaxLen = 32
+                val textMaxLen = 64
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    CustomOutlinedTextField(
+                        label = { Text("主标题") },
+                        value = titleValue,
+                        placeholder = { Text(text = "请输入内容，支持变量替换") },
+                        onValueChange = {
+                            titleValue = (if (it.length > titleMaxLen) it.take(titleMaxLen) else it)
+                                .filter { c -> c !in "\n\r" }
+                        },
+                        supportingText = {
+                            Text(
+                                text = "${titleValue.length} / $titleMaxLen",
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.End,
+                            )
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(12.dp),
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    CustomOutlinedTextField(
+                        label = { Text("副标题") },
+                        value = textValue,
+                        placeholder = { Text(text = "请输入内容，支持变量替换") },
+                        onValueChange = {
+                            textValue = if (it.length > textMaxLen) it.take(textMaxLen) else it
+                        },
+                        supportingText = {
+                            Text(
+                                text = "${textValue.length} / $textMaxLen",
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.End,
+                            )
+                        },
+                        maxLines = 4,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .autoFocus(),
+                        contentPadding = PaddingValues(12.dp),
+                    )
+                }
             },
             onDismissRequest = {
                 showNotifTextInputDlg = false
             },
             confirmButton = {
-                TextButton(enabled = value.isNotEmpty(), onClick = {
-                    storeFlow.update { it.copy(customNotifText = value) }
+                TextButton(onClick = {
+                    KeyboardUtils.hideSoftInput(activity)
+                    if (store.customNotifTitle != textValue || store.customNotifText != textValue) {
+                        storeFlow.update {
+                            it.copy(
+                                customNotifTitle = titleValue,
+                                customNotifText = textValue
+                            )
+                        }
+                        toast("更新成功")
+                    }
                     showNotifTextInputDlg = false
                 }) {
                     Text(
@@ -205,12 +239,12 @@ fun useSettingsPage(): ScaffoldExt {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val scrollState = rememberScrollState()
     return ScaffoldExt(
-        navItem = settingsNav,
+        navItem = BottomNavItem.Settings,
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(scrollBehavior = scrollBehavior, title = {
                 Text(
-                    text = settingsNav.label,
+                    text = BottomNavItem.Settings.label,
                 )
             })
         },
@@ -230,7 +264,7 @@ fun useSettingsPage(): ScaffoldExt {
 
             TextSwitch(
                 title = "触发提示",
-                subtitle = store.clickToast,
+                subtitle = store.actionToast,
                 checked = store.toastWhenClick,
                 modifier = Modifier.clickable {
                     showToastInputDlg = true
@@ -263,7 +297,11 @@ fun useSettingsPage(): ScaffoldExt {
             val subsStatus by vm.subsStatusFlow.collectAsState()
             TextSwitch(
                 title = "通知文案",
-                subtitle = if (store.useCustomNotifText) store.customNotifText else subsStatus,
+                subtitle = if (store.useCustomNotifText) {
+                    store.customNotifTitle + " / " + store.customNotifText
+                } else {
+                    subsStatus
+                },
                 checked = store.useCustomNotifText,
                 modifier = Modifier.clickable {
                     showNotifTextInputDlg = true
@@ -284,35 +322,6 @@ fun useSettingsPage(): ScaffoldExt {
                     )
                 })
 
-            Row(
-                modifier = Modifier
-                    .clickable(
-                        onClick = throttle(vm.viewModelScope.launchAsFn {
-                            if (updateAppMutex.mutex.isLocked) return@launchAsFn
-                            mainVm.dialogFlow.waitResult(
-                                title = "重载列表",
-                                text = "是否重新加载应用列表? \n\n如果应用信息不正确或切换了图标主题, 可使用此项同步最新状态",
-                                dismissRequest = true,
-                            )
-                            if (updateAppMutex.mutex.isLocked) return@launchAsFn
-                            appScope.launchTry(Dispatchers.IO) {
-                                initOrResetAppInfoCache()
-                                toast("重载成功")
-                            }
-                        })
-                    )
-                    .fillMaxWidth()
-                    .itemPadding(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = "重载应用列表",
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                RotatingLoadingIcon(loading = updateAppMutex.state.collectAsState().value)
-            }
-
             Text(
                 text = "主题",
                 modifier = Modifier.titleItemPadding(),
@@ -322,10 +331,11 @@ fun useSettingsPage(): ScaffoldExt {
 
             TextMenu(
                 title = "深色模式",
-                option = DarkThemeOption.allSubObject.findOption(store.enableDarkTheme)
-            ) {
-                storeFlow.update { s -> s.copy(enableDarkTheme = it.value) }
-            }
+                option = DarkThemeOption.allSubObject.findOption(store.enableDarkTheme),
+                onOptionChange = {
+                    storeFlow.update { s -> s.copy(enableDarkTheme = it.value) }
+                }
+            )
 
             if (supportDynamicColor) {
                 TextSwitch(
@@ -333,10 +343,9 @@ fun useSettingsPage(): ScaffoldExt {
                     subtitle = "配色跟随系统主题",
                     checked = store.enableDynamicColor,
                     onCheckedChange = {
-                        storeFlow.value = store.copy(
-                            enableDynamicColor = it
-                        )
-                    })
+                        storeFlow.update { s -> s.copy(enableDynamicColor = it) }
+                    }
+                )
             }
 
             Text(

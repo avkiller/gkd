@@ -11,62 +11,63 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.net.toUri
+import kotlinx.atomicfu.atomic
 import li.songe.gkd.META
 import li.songe.gkd.MainActivity
 import li.songe.gkd.app
-import li.songe.gkd.debug.FloatingService
-import li.songe.gkd.debug.HttpService
-import li.songe.gkd.debug.ScreenshotService
 import li.songe.gkd.permission.notificationState
+import li.songe.gkd.service.ButtonService
+import li.songe.gkd.service.HttpService
+import li.songe.gkd.service.RecordService
+import li.songe.gkd.service.ScreenshotService
 import li.songe.gkd.util.SafeR
 import li.songe.gkd.util.componentName
 import kotlin.reflect.KClass
 
+// 相同的 request code 会导致后续 PendingIntent 失效
+private val pendingIntentReqId = atomic(0)
 
 data class Notif(
-    val channelId: String = defaultChannel.id,
+    val channel: NotifChannel = NotifChannel.Default,
     val id: Int,
     val smallIcon: Int = SafeR.ic_status,
-    val title: String = META.appName,
-    val text: String,
-    val ongoing: Boolean,
-    val autoCancel: Boolean,
+    val title: String,
+    val text: String? = null,
+    val ongoing: Boolean = true,
+    val autoCancel: Boolean = false,
     val uri: String? = null,
     val stopService: KClass<out Service>? = null,
 ) {
     private fun toNotification(): Notification {
         val contextIntent = PendingIntent.getActivity(
             app,
-            0,
+            pendingIntentReqId.incrementAndGet(),
             Intent().apply {
                 component = MainActivity::class.componentName
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 data = uri?.toUri()
             },
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_IMMUTABLE
         )
-        val deleteIntent = stopService?.let {
-            PendingIntent.getBroadcast(
-                app,
-                0,
-                Intent().apply {
-                    action = StopServiceReceiver.STOP_ACTION
-                    putExtra(StopServiceReceiver.STOP_ACTION, it.componentName.className)
-                    setPackage(META.appId)
-                },
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-        }
-        val notification = NotificationCompat.Builder(app, channelId)
+        val notification = NotificationCompat.Builder(app, channel.id)
             .setSmallIcon(smallIcon)
             .setContentTitle(title)
             .setContentText(text)
             .setContentIntent(contextIntent)
-            .setDeleteIntent(deleteIntent)
             .setOngoing(ongoing)
             .setAutoCancel(autoCancel)
-            .build()
-        return notification
+        if (stopService != null) {
+            val deleteIntent = PendingIntent.getBroadcast(
+                app,
+                pendingIntentReqId.incrementAndGet(),
+                StopServiceReceiver.getIntent(stopService),
+                PendingIntent.FLAG_IMMUTABLE
+            )
+            notification
+                .setDeleteIntent(deleteIntent)
+                .addAction(0, "停止", deleteIntent)
+        }
+        return notification.build()
     }
 
     fun notifySelf() {
@@ -75,9 +76,10 @@ data class Notif(
         NotificationManagerCompat.from(app).notify(id, toNotification())
     }
 
-    fun notifyService(context: Service) {
+    context(service: Service)
+    fun notifyService() {
         ServiceCompat.startForeground(
-            context,
+            service,
             id,
             toNotification(),
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -92,60 +94,52 @@ data class Notif(
 val abNotif by lazy {
     Notif(
         id = 100,
+        title = META.appName,
         text = "无障碍正在运行",
-        ongoing = true,
-        autoCancel = false,
     )
 }
 
-val screenshotNotif by lazy {
-    Notif(
-        id = 101,
-        text = "截屏服务正在运行",
-        ongoing = true,
-        autoCancel = false,
-        uri = "gkd://page/1",
-        stopService = ScreenshotService::class,
-    )
-}
+val screenshotNotif = Notif(
+    id = 101,
+    title = "截屏服务正在运行",
+    text = "保存快照时截取屏幕",
+    uri = "gkd://page/1",
+    stopService = ScreenshotService::class,
+)
 
-val floatingNotif by lazy {
-    Notif(
-        id = 102,
-        text = "悬浮按钮正在显示",
-        ongoing = true,
-        autoCancel = false,
-        uri = "gkd://page/1",
-        stopService = FloatingService::class,
-    )
-}
+val buttonNotif = Notif(
+    id = 102,
+    title = "快照按钮服务正在运行",
+    text = "点击按钮捕获快照",
+    uri = "gkd://page/1",
+    stopService = ButtonService::class,
+)
 
-val httpNotif by lazy {
-    Notif(
-        id = 103,
-        text = "HTTP服务正在运行",
-        ongoing = true,
-        autoCancel = false,
-        uri = "gkd://page/1",
-        stopService = HttpService::class,
-    )
-}
+val httpNotif = Notif(
+    id = 103,
+    title = "HTTP服务正在运行",
+    uri = "gkd://page/1",
+    stopService = HttpService::class,
+)
 
-val snapshotNotif by lazy {
-    Notif(
-        id = 104,
-        text = "快照已保存至记录",
-        ongoing = false,
-        autoCancel = true,
-        uri = "gkd://page/2",
-    )
-}
+val snapshotActionNotif = Notif(
+    id = 104,
+    title = "快照服务正在运行",
+    text = "捕获快照完成后自动关闭",
+)
 
-val snapshotActionNotif by lazy {
-    Notif(
-        id = 105,
-        text = "快照服务正在运行",
-        ongoing = true,
-        autoCancel = false,
-    )
-}
+val snapshotNotif = Notif(
+    channel = NotifChannel.Snapshot,
+    id = 105,
+    title = "快照已保存",
+    ongoing = false,
+    autoCancel = true,
+    uri = "gkd://page/2",
+)
+
+val recordNotif = Notif(
+    id = 106,
+    title = "记录服务正在运行",
+    uri = "gkd://page/1",
+    stopService = RecordService::class,
+)

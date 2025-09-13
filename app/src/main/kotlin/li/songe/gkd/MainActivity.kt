@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -41,8 +42,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsAnimationCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
+import com.blankj.utilcode.util.KeyboardUtils
 import com.dylanc.activityresult.launcher.PickContentLauncher
 import com.dylanc.activityresult.launcher.StartActivityLauncher
 import com.ramcosta.composedestinations.DestinationsNavHost
@@ -51,28 +56,33 @@ import com.ramcosta.composedestinations.generated.destinations.AuthA11YPageDesti
 import com.ramcosta.composedestinations.utils.currentDestinationAsState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import li.songe.gkd.debug.FloatingService
-import li.songe.gkd.debug.HttpService
-import li.songe.gkd.debug.ScreenshotService
+import li.songe.gkd.a11y.topActivityFlow
+import li.songe.gkd.a11y.updateImeAppId
+import li.songe.gkd.a11y.updateLauncherAppId
+import li.songe.gkd.a11y.updateTopActivity
 import li.songe.gkd.permission.AuthDialog
 import li.songe.gkd.permission.updatePermissionState
 import li.songe.gkd.service.A11yService
-import li.songe.gkd.service.ManageService
+import li.songe.gkd.service.ButtonService
+import li.songe.gkd.service.HttpService
+import li.songe.gkd.service.ScreenshotService
+import li.songe.gkd.service.StatusService
 import li.songe.gkd.service.fixRestartService
-import li.songe.gkd.service.updateDefaultInputAppId
-import li.songe.gkd.service.updateLauncherAppId
 import li.songe.gkd.store.storeFlow
 import li.songe.gkd.ui.component.BuildDialog
 import li.songe.gkd.ui.component.ShareDataDialog
 import li.songe.gkd.ui.component.SubsSheet
 import li.songe.gkd.ui.component.TermsAcceptDialog
 import li.songe.gkd.ui.component.UrlDetailDialog
-import li.songe.gkd.ui.local.LocalMainViewModel
-import li.songe.gkd.ui.local.LocalNavController
+import li.songe.gkd.ui.share.LocalMainViewModel
+import li.songe.gkd.ui.share.LocalNavController
 import li.songe.gkd.ui.theme.AppTheme
 import li.songe.gkd.util.EditGithubCookieDlg
 import li.songe.gkd.util.ShortUrlSet
@@ -81,12 +91,13 @@ import li.songe.gkd.util.componentName
 import li.songe.gkd.util.copyText
 import li.songe.gkd.util.fixSomeProblems
 import li.songe.gkd.util.launchTry
-import li.songe.gkd.util.map
+import li.songe.gkd.util.mapState
 import li.songe.gkd.util.openApp
 import li.songe.gkd.util.openUri
 import li.songe.gkd.util.shizukuAppId
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
+import kotlin.concurrent.Volatile
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.jvmName
 
@@ -96,6 +107,54 @@ class MainActivity : ComponentActivity() {
     val launcher by lazy { StartActivityLauncher(this) }
     val pickContentLauncher by lazy { PickContentLauncher(this) }
 
+    val imeFullHiddenFlow = MutableStateFlow(true)
+    val imeShowingFlow = MutableStateFlow(false)
+
+    private val imeVisible: Boolean
+        get() = ViewCompat.getRootWindowInsets(window.decorView)!!
+            .isVisible(WindowInsetsCompat.Type.ime())
+
+    private fun watchKeyboardVisible() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            ViewCompat.setWindowInsetsAnimationCallback(
+                window.decorView,
+                object : WindowInsetsAnimationCompat.Callback(DISPATCH_MODE_CONTINUE_ON_SUBTREE) {
+                    override fun onStart(
+                        animation: WindowInsetsAnimationCompat,
+                        bounds: WindowInsetsAnimationCompat.BoundsCompat
+                    ): WindowInsetsAnimationCompat.BoundsCompat {
+                        imeShowingFlow.update { imeVisible }
+                        return super.onStart(animation, bounds)
+                    }
+
+                    override fun onProgress(
+                        insets: WindowInsetsCompat,
+                        runningAnimations: List<WindowInsetsAnimationCompat>
+                    ): WindowInsetsCompat {
+                        return insets
+                    }
+
+                    override fun onEnd(animation: WindowInsetsAnimationCompat) {
+                        imeFullHiddenFlow.update { !imeVisible }
+                        imeShowingFlow.update { false }
+                        super.onEnd(animation)
+                    }
+                })
+        } else {
+            KeyboardUtils.registerSoftInputChangedListener(window) { height ->
+                // onEnd
+                imeFullHiddenFlow.update { height == 0 }
+            }
+        }
+    }
+
+    suspend fun hideSoftInput() {
+        if (!imeFullHiddenFlow.updateAndGet { !imeVisible }) {
+            KeyboardUtils.hideSoftInput(this)
+            imeFullHiddenFlow.drop(1).first()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         enableEdgeToEdge()
@@ -104,18 +163,22 @@ class MainActivity : ComponentActivity() {
         mainVm
         launcher
         pickContentLauncher
-        ManageService.autoStart()
         lifecycleScope.launch {
-            storeFlow.map(lifecycleScope) { s -> s.excludeFromRecents }.collect {
-                activityManager.appTasks.forEach { task ->
+            storeFlow.mapState(lifecycleScope) { s -> s.excludeFromRecents }.collect {
+                app.activityManager.appTasks.forEach { task ->
                     task.setExcludeFromRecents(it)
                 }
             }
         }
-        addOnNewIntentListener(mainVm::handleIntent)
+        addOnNewIntentListener {
+            mainVm.handleIntent(it)
+            intent = null
+        }
+        watchKeyboardVisible()
+        StatusService.autoStart()
         setContent {
             val navController = rememberNavController()
-            mainVm.navController = navController
+            mainVm.updateNavController(navController)
             CompositionLocalProvider(
                 LocalNavController provides navController,
                 LocalMainViewModel provides mainVm
@@ -143,13 +206,21 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-            LaunchedEffect(null) { intent?.let(mainVm::handleIntent) }
+            LaunchedEffect(null) {
+                intent?.let {
+                    mainVm.handleIntent(it)
+                    intent = null
+                }
+            }
         }
     }
 
     override fun onStart() {
         super.onStart()
-        activityVisibleFlow.update { it + 1 }
+        activityVisibleState++
+        if (topActivityFlow.value.appId != META.appId) {
+            updateTopActivity(META.appId, MainActivity::class.jvmName)
+        }
     }
 
     var isFirstResume = true
@@ -157,14 +228,14 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         if (isFirstResume && startTime - app.startTime < 2000) {
             isFirstResume = false
-            return
+        } else {
+            syncFixState()
         }
-        syncFixState()
     }
 
     override fun onStop() {
         super.onStop()
-        activityVisibleFlow.update { it - 1 }
+        activityVisibleState--
     }
 
     private var lastBackPressedTime = 0L
@@ -181,16 +252,19 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private val activityVisibleFlow by lazy { MutableStateFlow(0) }
-fun isActivityVisible() = activityVisibleFlow.value > 0
+@Volatile
+private var activityVisibleState = 0
+fun isActivityVisible() = activityVisibleState > 0
+
+val activityNavSourceName by lazy { META.appId + ".activity.nav.source" }
 
 fun Activity.navToMainActivity() {
-    val intent = this.intent?.cloneFilter()
     if (intent != null) {
-        intent.component = MainActivity::class.componentName
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        intent.putExtra("source", this::class.qualifiedName)
-        startActivity(intent)
+        val navIntent = Intent(intent)
+        navIntent.component = MainActivity::class.componentName
+        navIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        navIntent.putExtra(activityNavSourceName, this::class.jvmName)
+        startActivity(navIntent)
     }
     finish()
 }
@@ -208,8 +282,8 @@ private fun updateServiceRunning() {
     fun checkRunning(cls: KClass<*>): Boolean {
         return list.any { it.service.className == cls.jvmName }
     }
-    ManageService.isRunning.value = checkRunning(ManageService::class)
-    FloatingService.isRunning.value = checkRunning(FloatingService::class)
+    StatusService.isRunning.value = checkRunning(StatusService::class)
+    ButtonService.isRunning.value = checkRunning(ButtonService::class)
     ScreenshotService.isRunning.value = checkRunning(ScreenshotService::class)
     HttpService.isRunning.value = checkRunning(HttpService::class)
 }
@@ -218,18 +292,10 @@ private val syncStateMutex = Mutex()
 fun syncFixState() {
     appScope.launchTry(Dispatchers.IO) {
         syncStateMutex.withLock {
-            // 每次切换页面更新记录桌面 appId
             updateLauncherAppId()
-
-            updateDefaultInputAppId()
-
-            // 由于某些机型的进程存在 安装缓存/崩溃缓存 导致服务状态可能不正确, 在此保证每次界面切换都能重新刷新状态
+            updateImeAppId()
             updateServiceRunning()
-
-            // 用户在系统权限设置中切换权限后再切换回应用时能及时更新状态
             updatePermissionState()
-
-            // 自动重启无障碍服务
             fixRestartService()
         }
     }

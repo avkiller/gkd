@@ -3,39 +3,26 @@ package li.songe.gkd
 import android.app.ActivityManager
 import android.app.AppOpsManager
 import android.app.Application
-import android.content.ComponentName
 import android.content.Context
-import android.content.Context.ACTIVITY_SERVICE
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.database.ContentObserver
 import android.os.Build
 import android.provider.Settings
-import android.text.TextUtils
 import com.blankj.utilcode.util.LogUtils
 import com.blankj.utilcode.util.Utils
-import com.hjq.toast.Toaster
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.Serializable
 import li.songe.gkd.data.selfAppInfo
-import li.songe.gkd.debug.clearHttpSubs
 import li.songe.gkd.notif.initChannel
-import li.songe.gkd.permission.shizukuOkState
-import li.songe.gkd.service.A11yService
+import li.songe.gkd.service.clearHttpSubs
 import li.songe.gkd.shizuku.initShizuku
 import li.songe.gkd.store.initStore
 import li.songe.gkd.util.SafeR
 import li.songe.gkd.util.initAppState
 import li.songe.gkd.util.initSubsState
-import li.songe.gkd.util.json
-import li.songe.gkd.util.launchTry
-import li.songe.gkd.util.setReactiveToastStyle
-import li.songe.gkd.util.toast
-import li.songe.json5.encodeToJson5String
+import li.songe.gkd.util.initToast
+import li.songe.gkd.util.toJson5String
 import org.lsposed.hiddenapibypass.HiddenApiBypass
-import rikka.shizuku.Shizuku
 
 
 val appScope by lazy { MainScope() }
@@ -55,8 +42,8 @@ private fun getMetaString(key: String): String {
     return applicationInfo.metaData.getString(key) ?: error("Missing meta-data: $key")
 }
 
-val activityManager by lazy { app.getSystemService(ACTIVITY_SERVICE) as ActivityManager }
-val appOpsManager by lazy { app.getSystemService(AppOpsManager::class.java) as AppOpsManager }
+// https://github.com/aosp-mirror/platform_frameworks_base/blob/android16-release/packages/SettingsLib/src/com/android/settingslib/accessibility/AccessibilityUtils.java#L41
+private const val ENABLED_ACCESSIBILITY_SERVICES_SEPARATOR = ':'
 
 @Serializable
 data class AppMeta(
@@ -65,7 +52,7 @@ data class AppMeta(
     val commitTime: Long = getMetaString("commitTime").toLong(),
     val tagName: String? = getMetaString("tagName").takeIf { it.isNotEmpty() },
     val debuggable: Boolean = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0,
-    val versionCode: Int = selfAppInfo.versionCode.toInt(),
+    val versionCode: Int = selfAppInfo.versionCode,
     val versionName: String = selfAppInfo.versionName!!,
     val appId: String = app.packageName!!,
     val appName: String = app.getString(SafeR.app_name)
@@ -81,6 +68,10 @@ data class AppMeta(
 val META by lazy { AppMeta() }
 
 class App : Application() {
+    init {
+        innerApp = this
+    }
+
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -88,22 +79,39 @@ class App : Application() {
         }
     }
 
+    fun getSecureString(name: String): String? = Settings.Secure.getString(contentResolver, name)
+    fun putSecureString(name: String, value: String?): Boolean {
+        return Settings.Secure.putString(contentResolver, name, value)
+    }
+
+    fun getSecureA11yServices(): MutableSet<String> {
+        return (getSecureString(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: "").split(
+            ENABLED_ACCESSIBILITY_SERVICES_SEPARATOR
+        ).toHashSet()
+    }
+
+    fun putSecureA11yServices(services: Set<String>) {
+        putSecureString(
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+            services.joinToString(ENABLED_ACCESSIBILITY_SERVICES_SEPARATOR.toString())
+        )
+    }
+
     val startTime = System.currentTimeMillis()
+    var justStarted: Boolean = true
+        get() {
+            if (field) {
+                field = System.currentTimeMillis() - startTime < 3_000
+            }
+            return field
+        }
+
+    val activityManager by lazy { app.getSystemService(ACTIVITY_SERVICE) as ActivityManager }
+    val appOpsManager by lazy { app.getSystemService(APP_OPS_SERVICE) as AppOpsManager }
 
     override fun onCreate() {
         super.onCreate()
-        innerApp = this
         Utils.init(this)
-
-        val errorHandler = Thread.getDefaultUncaughtExceptionHandler()
-        Thread.setDefaultUncaughtExceptionHandler { t, e ->
-            LogUtils.d("UncaughtExceptionHandler", t, e)
-            errorHandler?.uncaughtException(t, e)
-        }
-
-        Toaster.init(this)
-        setReactiveToastStyle()
-
         LogUtils.getConfig().apply {
             setConsoleSwitch(META.debuggable)
             saveDays = 7
@@ -111,59 +119,18 @@ class App : Application() {
         }
         LogUtils.d(
             "META",
-            json.encodeToJson5String(META),
+            toJson5String(META),
         )
-        app.contentResolver.registerContentObserver(
-            Settings.Secure.getUriFor(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES),
-            false,
-            object : ContentObserver(null) {
-                override fun onChange(selfChange: Boolean) {
-                    super.onChange(selfChange)
-                    a11yServiceEnabledFlow.value = getA11yServiceEnabled()
-                }
-            }
-        )
-        Shizuku.addBinderReceivedListener {
-            LogUtils.d("Shizuku.addBinderReceivedListener")
-            appScope.launchTry(Dispatchers.IO) {
-                shizukuOkState.updateAndGet()
-            }
+        Thread.setDefaultUncaughtExceptionHandler { t, e ->
+            LogUtils.d("UncaughtExceptionHandler", t, e)
         }
-        Shizuku.addBinderDeadListener {
-            LogUtils.d("Shizuku.addBinderDeadListener")
-            shizukuOkState.stateFlow.value = false
-            val prefix = if (isActivityVisible()) "" else "${META.appName}: "
-            toast("${prefix}已断开 Shizuku 服务")
-        }
-        appScope.launchTry(Dispatchers.IO) {
-            initStore()
-            initAppState()
-            initSubsState()
-            initChannel()
-            initShizuku()
-            clearHttpSubs()
-            syncFixState()
-        }
+        initToast()
+        initStore()
+        initChannel()
+        initAppState()
+        initShizuku()
+        initSubsState()
+        clearHttpSubs()
+        syncFixState()
     }
-}
-
-val a11yServiceEnabledFlow by lazy { MutableStateFlow(getA11yServiceEnabled()) }
-private fun getA11yServiceEnabled(): Boolean {
-    val value = try {
-        Settings.Secure.getString(
-            app.contentResolver,
-            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-        )
-    } catch (_: Exception) {
-        null
-    }
-    if (value.isNullOrEmpty()) return false
-    val colonSplitter = TextUtils.SimpleStringSplitter(':')
-    colonSplitter.setString(value)
-    while (colonSplitter.hasNext()) {
-        if (ComponentName.unflattenFromString(colonSplitter.next()) == A11yService.a11yComponentName) {
-            return true
-        }
-    }
-    return false
 }

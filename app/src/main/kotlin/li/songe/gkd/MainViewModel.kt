@@ -1,15 +1,15 @@
 package li.songe.gkd
 
 import android.app.Activity
-import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
-import android.service.quicksettings.TileService
+import android.os.Handler
+import android.os.Looper
 import android.webkit.URLUtil
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
+import androidx.navigation.NavOptionsBuilder
 import com.blankj.utilcode.util.LogUtils
 import com.ramcosta.composedestinations.generated.destinations.AdvancedPageDestination
 import com.ramcosta.composedestinations.generated.destinations.SnapshotPageDestination
@@ -20,24 +20,18 @@ import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import li.songe.gkd.a11y.useA11yServiceEnabledFlow
 import li.songe.gkd.data.RawSubscription
 import li.songe.gkd.data.SubsItem
 import li.songe.gkd.data.importData
 import li.songe.gkd.db.DbSet
-import li.songe.gkd.debug.FloatingTileService
-import li.songe.gkd.debug.HttpTileService
-import li.songe.gkd.debug.SnapshotTileService
 import li.songe.gkd.permission.AuthReason
 import li.songe.gkd.permission.shizukuOkState
-import li.songe.gkd.service.MatchTileService
-import li.songe.gkd.shizuku.execCommandForResult
+import li.songe.gkd.shizuku.shizukuContextFlow
+import li.songe.gkd.shizuku.updateBinderMutex
 import li.songe.gkd.store.createTextFlow
 import li.songe.gkd.store.storeFlow
 import li.songe.gkd.ui.component.AlertDialogOptions
@@ -45,14 +39,12 @@ import li.songe.gkd.ui.component.InputSubsLinkOption
 import li.songe.gkd.ui.component.RuleGroupState
 import li.songe.gkd.ui.component.UploadOptions
 import li.songe.gkd.ui.home.BottomNavItem
-import li.songe.gkd.ui.home.appListNav
-import li.songe.gkd.ui.home.controlNav
-import li.songe.gkd.ui.home.subsNav
 import li.songe.gkd.util.LOCAL_SUBS_ID
+import li.songe.gkd.util.OnSimpleLife
 import li.songe.gkd.util.UpdateStatus
+import li.songe.gkd.util.appIconMapFlow
 import li.songe.gkd.util.clearCache
 import li.songe.gkd.util.client
-import li.songe.gkd.util.componentName
 import li.songe.gkd.util.launchTry
 import li.songe.gkd.util.openUri
 import li.songe.gkd.util.openWeChatScaner
@@ -63,29 +55,28 @@ import li.songe.gkd.util.toast
 import li.songe.gkd.util.updateSubsMutex
 import li.songe.gkd.util.updateSubscription
 import rikka.shizuku.Shizuku
-import java.lang.ref.WeakReference
+import kotlin.reflect.jvm.jvmName
 
 private var tempTermsAccepted = false
 
-class MainViewModel : ViewModel() {
+class MainViewModel : ViewModel(), OnSimpleLife {
 
-    private var navControllerRef: WeakReference<NavHostController>? = null
-    var navController: NavHostController
-        get() = navControllerRef?.get() ?: error("not found navController")
-        set(value) {
-            navControllerRef = WeakReference(value)
+    private lateinit var navController: NavHostController
+    fun updateNavController(navController: NavHostController) {
+        this.navController = navController
+    }
+
+    fun popBackStack() {
+        if (Looper.getMainLooper() == Looper.myLooper()) {
+            navController.popBackStack()
+        } else {
+            viewModelScope.launch {
+                withContext(Dispatchers.Main) {
+                    navController.popBackStack()
+                }
+            }
         }
-
-    val enableDarkThemeFlow = storeFlow.debounce(300).map { s -> s.enableDarkTheme }.stateIn(
-        viewModelScope,
-        SharingStarted.Eagerly,
-        storeFlow.value.enableDarkTheme
-    )
-    val enableDynamicColorFlow = storeFlow.debounce(300).map { s -> s.enableDynamicColor }.stateIn(
-        viewModelScope,
-        SharingStarted.Eagerly,
-        storeFlow.value.enableDynamicColor
-    )
+    }
 
     val dialogFlow = MutableStateFlow<AlertDialogOptions?>(null)
     val authReasonFlow = MutableStateFlow<AuthReason?>(null)
@@ -109,7 +100,7 @@ class MainViewModel : ViewModel() {
         oldItem: SubsItem? = null,
     ) = viewModelScope.launchTry(Dispatchers.IO) {
         if (updateSubsMutex.mutex.isLocked) return@launchTry
-        updateSubsMutex.withLock {
+        updateSubsMutex.withStateLock {
             val subItems = subsItemsFlow.value
             val text = try {
                 client.get(url).bodyAsText()
@@ -170,24 +161,34 @@ class MainViewModel : ViewModel() {
     }
 
     val appListKeyFlow = MutableStateFlow(0)
-    val tabFlow = MutableStateFlow(controlNav)
+    val tabFlow = MutableStateFlow(BottomNavItem.Control.key)
     private var lastClickTabTime = 0L
     fun updateTab(navItem: BottomNavItem) {
-        if (navItem == appListNav && navItem == tabFlow.value) {
+        if (navItem == BottomNavItem.AppList && navItem.key == tabFlow.value) {
             // double click
             if (System.currentTimeMillis() - lastClickTabTime < 500) {
                 appListKeyFlow.update { it + 1 }
             }
         }
-        tabFlow.value = navItem
+        tabFlow.value = navItem.key
         lastClickTabTime = System.currentTimeMillis()
     }
 
-    fun navigatePage(direction: Direction) {
+    fun navigatePage(direction: Direction, builder: (NavOptionsBuilder.() -> Unit)? = null) {
         if (direction.route == navController.currentDestination?.route) {
             return
         }
-        navController.navigate(direction.route)
+        if (Looper.getMainLooper() != Looper.myLooper()) {
+            Handler(Looper.getMainLooper()).postDelayed({
+                navigatePage(direction, builder)
+            }, 0)
+            return
+        }
+        if (builder != null) {
+            navController.navigate(direction.route, builder)
+        } else {
+            navController.navigate(direction.route)
+        }
     }
 
     fun navigateWebPage(url: String) {
@@ -198,7 +199,13 @@ class MainViewModel : ViewModel() {
         val notFoundToast = { toast("未知URI\n${uri}") }
         when (uri.host) {
             "page" -> when (uri.path) {
-                "" -> {}
+                "" -> {
+                    val tab = uri.getQueryParameter("tab")?.toIntOrNull()
+                    if (tab != null && BottomNavItem.allSubObjects.any { it.key == tab }) {
+                        tabFlow.value = tab
+                    }
+                }
+
                 "/1" -> navigatePage(AdvancedPageDestination)
                 "/2" -> navigatePage(SnapshotPageDestination())
                 else -> notFoundToast()
@@ -213,37 +220,16 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun handleIntent(intent: Intent) = viewModelScope.launchTry(Dispatchers.Main) {
+    fun handleIntent(intent: Intent) = viewModelScope.launchTry {
         LogUtils.d("handleIntent", intent)
         val uri = intent.data?.normalizeScheme()
+        val source = intent.getStringExtra(activityNavSourceName)
         if (uri?.scheme == "gkd") {
-            delay(200)
             handleGkdUri(uri)
-        } else if (uri != null && intent.getStringExtra("source") == OpenFileActivity::class.qualifiedName) {
+        } else if (source == OpenFileActivity::class.jvmName && uri != null) {
             toast("加载导入中...")
-            tabFlow.value = subsNav
+            tabFlow.value = BottomNavItem.SubsManage.key
             withContext(Dispatchers.IO) { importData(uri) }
-        } else if (intent.action == TileService.ACTION_QS_TILE_PREFERENCES) {
-            val qsTileCpt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                intent.getParcelableExtra(Intent.EXTRA_COMPONENT_NAME, ComponentName::class.java)
-            } else {
-                @Suppress("DEPRECATION")
-                intent.getParcelableExtra(Intent.EXTRA_COMPONENT_NAME) as ComponentName?
-            } ?: return@launchTry
-            delay(200)
-            when (qsTileCpt) {
-                HttpTileService::class.componentName, FloatingTileService::class.componentName -> {
-                    navigatePage(AdvancedPageDestination)
-                }
-
-                SnapshotTileService::class.componentName -> {
-                    navigatePage(SnapshotPageDestination)
-                }
-
-                MatchTileService::class.componentName -> {
-                    tabFlow.value = subsNav
-                }
-            }
         }
     }
 
@@ -275,27 +261,40 @@ class MainViewModel : ViewModel() {
         )
     }
 
-    suspend fun grantPermissionByShizuku(command: String) {
-        if (shizukuOkState.stateFlow.value) {
-            try {
-                execCommandForResult(command)
-                return
-            } catch (e: Exception) {
-                toast("运行失败:${e.message}")
-                LogUtils.d(e)
-            }
-        } else {
-            try {
-                Shizuku.requestPermission(Activity.RESULT_OK)
-            } catch (e: Throwable) {
-                LogUtils.d("Shizuku授权错误", e.message)
-                shizukuErrorFlow.value = e
-            }
-        }
-        stopCoroutine()
+
+    fun requestShizuku() = try {
+        Shizuku.requestPermission(Activity.RESULT_OK)
+    } catch (e: Throwable) {
+        shizukuErrorFlow.value = e
     }
 
+    suspend fun grantPermissionByShizuku(command: String) {
+        if (updateBinderMutex.mutex.isLocked) {
+            toast("正在连接 Shizuku 服务，请稍后")
+            stopCoroutine()
+        }
+        if (!shizukuOkState.stateFlow.value) {
+            requestShizuku()
+            stopCoroutine()
+        }
+        if (!storeFlow.value.enableShizuku) {
+            storeFlow.update { it.copy(enableShizuku = true) }
+            delay(500)
+            while (updateBinderMutex.mutex.isLocked) {
+                delay(100)
+            }
+        }
+        val service = shizukuContextFlow.value.serviceWrapper ?: stopCoroutine()
+        if (!service.execCommandForResult(command).ok) {
+            stopCoroutine()
+        }
+    }
+
+    val a11yServiceEnabledFlow = useA11yServiceEnabledFlow()
+
     init {
+        // preload
+        appIconMapFlow.value
         viewModelScope.launchTry(Dispatchers.IO) {
             val subsItems = DbSet.subsItemDao.queryAll()
             if (!subsItems.any { s -> s.id == LOCAL_SUBS_ID }) {
@@ -330,5 +329,9 @@ class MainViewModel : ViewModel() {
             // preload
             githubCookieFlow.value
         }
+
+        // for OnSimpleLife
+        onCreated()
+        addCloseable { onDestroyed() }
     }
 }

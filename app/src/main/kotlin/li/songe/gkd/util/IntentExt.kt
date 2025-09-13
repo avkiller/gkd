@@ -1,6 +1,7 @@
 package li.songe.gkd.util
 
 import android.app.Service
+import android.content.ComponentName
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -15,8 +16,10 @@ import androidx.core.net.toUri
 import com.blankj.utilcode.util.LogUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import li.songe.gkd.META
 import li.songe.gkd.MainActivity
 import li.songe.gkd.app
+import li.songe.gkd.isActivityVisible
 import li.songe.gkd.permission.canWriteExternalStorage
 import li.songe.gkd.permission.foregroundServiceSpecialUseState
 import li.songe.gkd.permission.notificationState
@@ -134,6 +137,15 @@ fun <T : Service> startForegroundServiceByClass(clazz: KClass<T>) {
         app.startForegroundService(intent)
     } catch (e: Throwable) {
         LogUtils.d(e)
-        toast("启动服务失败: ${e.message}")
+        val prefix = if (isActivityVisible()) "" else "${META.appName}: "
+        toast("${prefix}启动服务失败: ${e.message}")
     }
 }
+
+val Intent.extraCptName: ComponentName?
+    get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        getParcelableExtra(Intent.EXTRA_COMPONENT_NAME, ComponentName::class.java)
+    } else {
+        @Suppress("DEPRECATION")
+        getParcelableExtra(Intent.EXTRA_COMPONENT_NAME) as? ComponentName?
+    }

@@ -82,15 +82,15 @@ val subsEntriesFlow by lazy {
 }
 
 val usedSubsEntriesFlow by lazy {
-    subsEntriesFlow.map {
-        it.filter { s -> s.subsItem.enable && s.subscription != null }
+    subsEntriesFlow.map { list ->
+        list.filter { s -> s.subsItem.enable && s.subscription != null }
             .map { UsedSubsEntry(it.subsItem, it.subscription!!) }
     }.stateIn(appScope, SharingStarted.Eagerly, emptyList())
 }
 
 fun updateSubscription(subscription: RawSubscription) {
     appScope.launchTry {
-        updateSubsMutex.withLock {
+        updateSubsMutex.withStateLock {
             val subsId = subscription.id
             val subsName = subscription.name
             val newMap = subsIdToRawFlow.value.toMutableMap()
@@ -394,7 +394,7 @@ private fun refreshRawSubsList(items: List<SubsItem>): Boolean {
 fun initSubsState() {
     subsItemsFlow.value
     appScope.launchTry(Dispatchers.IO) {
-        updateSubsMutex.withLock {
+        updateSubsMutex.withStateLock {
             val items = DbSet.subsItemDao.queryAll()
             refreshRawSubsList(items)
         }
@@ -413,15 +413,11 @@ private suspend fun updateSubs(subsEntry: SubsEntry): RawSubscription? {
             val subsVersion = json.decodeFromJson5String<SubsVersion>(
                 client.get(checkUpdateUrl).bodyAsText()
             )
-            LogUtils.d(
-                "快速检测更新:id=${subsRaw.id},version=${subsRaw.version}",
-                subsVersion
-            )
             if (subsVersion.id == subsRaw.id && subsVersion.version <= subsRaw.version) {
                 return null
             }
         } catch (e: Exception) {
-            LogUtils.d("快速检测更新失败", subsItem, e)
+            LogUtils.d("快速检测更新失败", subsItem, e.message)
         }
     }
     val updateUrl = subsRaw?.updateUrl ?: subsItem.updateUrl
@@ -452,12 +448,12 @@ fun checkSubsUpdate(showToast: Boolean = false) = appScope.launchTry(Dispatchers
     if (updateSubsMutex.mutex.isLocked) {
         return@launchTry
     }
-    updateSubsMutex.withLock {
+    updateSubsMutex.withStateLock {
         if (subsEntriesFlow.value.any { !it.subsItem.isLocal } && !NetworkUtils.isAvailable()) {
             if (showToast) {
                 toast("网络不可用")
             }
-            return@withLock
+            return@withStateLock
         }
         LogUtils.d("开始检测更新")
         // 文件不存在, 重新加载
@@ -487,7 +483,7 @@ fun checkSubsUpdate(showToast: Boolean = false) = appScope.launchTry(Dispatchers
                         set(subsEntry.subsItem.id, e)
                     }
                 }
-                LogUtils.d("检测更新失败", e)
+                LogUtils.d("检测更新失败", e.message)
             }
         }
         if (showToast) {

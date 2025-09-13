@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -16,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
-import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -26,6 +26,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -53,7 +55,7 @@ import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.QueryPkgAuthCard
 import li.songe.gkd.ui.component.autoFocus
 import li.songe.gkd.ui.component.useListScrollState
-import li.songe.gkd.ui.local.LocalMainViewModel
+import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.appItemPadding
 import li.songe.gkd.ui.style.menuPadding
@@ -63,10 +65,8 @@ import li.songe.gkd.util.SortTypeOption
 import li.songe.gkd.util.mapHashCode
 import li.songe.gkd.util.ruleSummaryFlow
 import li.songe.gkd.util.throttle
-
-val appListNav = BottomNavItem(
-    label = "应用", icon = Icons.Default.Apps
-)
+import li.songe.gkd.util.updateAllAppInfo
+import li.songe.gkd.util.updateAppMutex
 
 @Composable
 fun useAppListPage(): ScaffoldExt {
@@ -91,8 +91,10 @@ fun useAppListPage(): ScaffoldExt {
     val showSearchBar by vm.showSearchBarFlow.collectAsState()
     val resetKey = orderedAppInfos.mapHashCode { it.id }
     val (scrollBehavior, listState) = useListScrollState(resetKey, appListKey)
+    val refreshing by updateAppMutex.state.collectAsState()
+    val pullToRefreshState = rememberPullToRefreshState()
     return ScaffoldExt(
-        navItem = appListNav,
+        navItem = BottomNavItem.AppList,
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             DisposableEffect(null) {
@@ -126,7 +128,7 @@ fun useAppListPage(): ScaffoldExt {
                                 mainVm.appListKeyFlow.update { it + 1 }
                             }
                         ),
-                        text = appListNav.label,
+                        text = BottomNavItem.AppList.label,
                     )
                 }
             }, actions = {
@@ -230,78 +232,85 @@ fun useAppListPage(): ScaffoldExt {
             })
         }
     ) { contentPadding ->
-        LazyColumn(
+        PullToRefreshBox(
             modifier = Modifier.padding(contentPadding),
-            state = listState
+            state = pullToRefreshState,
+            isRefreshing = refreshing,
+            onRefresh = { updateAllAppInfo(true) }
         ) {
-            items(orderedAppInfos, { it.id }) { appInfo ->
-                Row(
-                    modifier = Modifier
-                        .clickable(onClick = throttle {
-                            if (KeyboardUtils.isSoftInputVisible(context)) {
-                                softwareKeyboardController?.hide()
-                            }
-                            mainVm.navigatePage(AppConfigPageDestination(appInfo.id))
-                        })
-                        .appItemPadding(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    AppIcon(appInfo = appInfo)
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                state = listState
+            ) {
+                items(orderedAppInfos, { it.id }) { appInfo ->
+                    Row(
                         modifier = Modifier
-                            .weight(1f),
-                        verticalArrangement = Arrangement.Center
+                            .clickable(onClick = throttle {
+                                if (KeyboardUtils.isSoftInputVisible(context)) {
+                                    softwareKeyboardController?.hide()
+                                }
+                                mainVm.navigatePage(AppConfigPageDestination(appInfo.id))
+                            })
+                            .appItemPadding(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        AppNameText(appInfo = appInfo)
-                        val appGroups = ruleSummary.appIdToAllGroups[appInfo.id] ?: emptyList()
-                        val appDesc = if (appGroups.isNotEmpty()) {
-                            when (val disabledCount = appGroups.count { g -> !g.enable }) {
-                                0 -> {
-                                    "${appGroups.size}组规则"
-                                }
+                        AppIcon(appId = appInfo.id)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(
+                            modifier = Modifier
+                                .weight(1f),
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            AppNameText(appInfo = appInfo)
+                            val appGroups = ruleSummary.appIdToAllGroups[appInfo.id] ?: emptyList()
+                            val appDesc = if (appGroups.isNotEmpty()) {
+                                when (val disabledCount = appGroups.count { g -> !g.enable }) {
+                                    0 -> {
+                                        "${appGroups.size}组规则"
+                                    }
 
-                                appGroups.size -> {
-                                    "${appGroups.size}组规则/${disabledCount}关闭"
-                                }
+                                    appGroups.size -> {
+                                        "${appGroups.size}组规则/${disabledCount}关闭"
+                                    }
 
-                                else -> {
-                                    "${appGroups.size}组规则/${appGroups.size - disabledCount}启用/${disabledCount}关闭"
+                                    else -> {
+                                        "${appGroups.size}组规则/${appGroups.size - disabledCount}启用/${disabledCount}关闭"
+                                    }
                                 }
-                            }
-                        } else {
-                            null
-                        }
-                        val desc = if (globalDesc != null) {
-                            if (appDesc != null) {
-                                "$globalDesc/$appDesc"
                             } else {
-                                globalDesc
+                                null
                             }
-                        } else {
-                            appDesc
-                        }
-                        if (desc != null) {
-                            Text(
-                                text = desc,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                softWrap = false
-                            )
+                            val desc = if (globalDesc != null) {
+                                if (appDesc != null) {
+                                    "$globalDesc/$appDesc"
+                                } else {
+                                    globalDesc
+                                }
+                            } else {
+                                appDesc
+                            }
+                            if (desc != null) {
+                                Text(
+                                    text = desc,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    softWrap = false
+                                )
+                            }
                         }
                     }
                 }
-            }
-            item(LIST_PLACEHOLDER_KEY) {
-                Spacer(modifier = Modifier.height(EmptyHeight))
-                if (orderedAppInfos.isEmpty() && searchStr.isNotEmpty()) {
-                    val hasShowAll = showSystemApp && showHiddenApp
-                    EmptyText(text = if (hasShowAll) "暂无搜索结果" else "暂无搜索结果,请尝试修改筛选条件")
+                item(LIST_PLACEHOLDER_KEY) {
+                    Spacer(modifier = Modifier.height(EmptyHeight))
+                    if (orderedAppInfos.isEmpty() && searchStr.isNotEmpty()) {
+                        val hasShowAll = showSystemApp && showHiddenApp
+                        EmptyText(text = if (hasShowAll) "暂无搜索结果" else "暂无搜索结果,请尝试修改筛选条件")
+                    }
+                    QueryPkgAuthCard()
                 }
-                QueryPkgAuthCard()
             }
         }
     }

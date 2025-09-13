@@ -6,7 +6,6 @@ import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -44,7 +43,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewModelScope
@@ -53,6 +60,7 @@ import com.ramcosta.composedestinations.annotation.RootGraph
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import li.songe.gkd.META
 import li.songe.gkd.MainActivity
 import li.songe.gkd.app
@@ -61,8 +69,9 @@ import li.songe.gkd.ui.component.RotatingLoadingIcon
 import li.songe.gkd.ui.component.SettingItem
 import li.songe.gkd.ui.component.TextMenu
 import li.songe.gkd.ui.component.waitResult
-import li.songe.gkd.ui.local.LocalMainViewModel
-import li.songe.gkd.ui.local.LocalNavController
+import li.songe.gkd.ui.share.LocalDarkTheme
+import li.songe.gkd.ui.share.LocalMainViewModel
+import li.songe.gkd.ui.share.LocalNavController
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.ProfileTransitions
 import li.songe.gkd.ui.style.itemPadding
@@ -76,6 +85,7 @@ import li.songe.gkd.util.UpdateChannelOption
 import li.songe.gkd.util.buildLogFile
 import li.songe.gkd.util.findOption
 import li.songe.gkd.util.format
+import li.songe.gkd.util.launchAsFn
 import li.songe.gkd.util.launchTry
 import li.songe.gkd.util.openUri
 import li.songe.gkd.util.saveFileToDownloads
@@ -245,9 +255,32 @@ fun AboutPage() {
             )
             Column(
                 modifier = Modifier
-                    .clickable(onClick = throttle {
+                    .clickable(onClick = throttle(mainVm.viewModelScope.launchAsFn {
+                        mainVm.dialogFlow.waitResult(
+                            title = "反馈须知",
+                            textContent = {
+                                Text(text = buildAnnotatedString {
+                                    val highlightStyle = SpanStyle(
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary,
+                                    )
+                                    append("感谢您愿意花时间反馈，")
+                                    withStyle(style = highlightStyle) {
+                                        append("GKD 默认不携带任何规则，只接受应用本体功能相关的反馈")
+                                    }
+                                    append("\n\n")
+                                    append("请先判断是不是第三方规则订阅的问题，如果是，您应该向规则提供者反馈，而不是在此处反馈。")
+                                    withStyle(style = highlightStyle) {
+                                        append("如果您已经确信是 GKD 应用本体的问题")
+                                    }
+                                    append("，可点击下方继续反馈")
+                                })
+                            },
+                            confirmText = "继续反馈",
+                            dismissRequest = true,
+                        )
                         mainVm.openUrl(ISSUES_URL)
-                    })
+                    }))
                     .fillMaxWidth()
                     .itemPadding()
             ) {
@@ -374,9 +407,14 @@ fun AboutPage() {
                         .clickable(onClick = throttle {
                             showShareAppDlg = false
                             mainVm.viewModelScope.launchTry(Dispatchers.IO) {
-                                val apkFile = sharedDir.resolve("gkd-v${META.versionName}.apk")
-                                File(app.packageCodePath).copyTo(apkFile, overwrite = true)
-                                context.shareFile(apkFile, "分享安装文件")
+                                if (!META.isGkdChannel) {
+                                    mainVm.dialogFlow.waitResult(
+                                        title = "分享提示",
+                                        textContent = { Text(text = exportPlayTipTemplate()) },
+                                        confirmText = "继续",
+                                    )
+                                }
+                                context.shareFile(getShareApkFile(), "分享安装文件")
                             }
                         })
                         .then(modifier)
@@ -386,9 +424,14 @@ fun AboutPage() {
                         .clickable(onClick = throttle {
                             showShareAppDlg = false
                             mainVm.viewModelScope.launchTry(Dispatchers.IO) {
-                                val apkFile = sharedDir.resolve("gkd-v${META.versionName}.apk")
-                                File(app.packageCodePath).copyTo(apkFile, overwrite = true)
-                                context.saveFileToDownloads(apkFile)
+                                if (!META.isGkdChannel) {
+                                    mainVm.dialogFlow.waitResult(
+                                        title = "保存提示",
+                                        textContent = { Text(text = exportPlayTipTemplate()) },
+                                        confirmText = "继续",
+                                    )
+                                }
+                                context.saveFileToDownloads(getShareApkFile())
                             }
                         })
                         .then(modifier)
@@ -407,12 +450,37 @@ fun AboutPage() {
 }
 
 @Composable
+private fun exportPlayTipTemplate(): AnnotatedString {
+    return buildAnnotatedString {
+        append("当前导出的 APK 文件只能在已安装 Google 框架的设备上才能使用，否则安装打开后会提示报错，")
+        withLink(
+            LinkAnnotation.Url(
+                ShortUrlSet.URL13,
+                TextLinkStyles(
+                    style = SpanStyle(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                )
+            )
+        ) {
+            append("建议点此从官网下载")
+        }
+        append("，或点击下方继续操作")
+    }
+}
+
+private fun getShareApkFile(): File {
+    return sharedDir.resolve("gkd-v${META.versionName}.apk").apply {
+        File(app.packageCodePath).copyTo(this, overwrite = true)
+    }
+}
+
+@Composable
 private fun AnimatedLogoIcon(
     modifier: Modifier = Modifier
 ) {
-    val mainVm = LocalMainViewModel.current
-    val enableDarkTheme by mainVm.enableDarkThemeFlow.collectAsState()
-    val darkTheme = enableDarkTheme ?: isSystemInDarkTheme()
+    val darkTheme = LocalDarkTheme.current
     var atEnd by remember { mutableStateOf(false) }
     val animation = AnimatedImageVector.animatedVectorResource(id = SafeR.ic_anim_logo)
     val painter = rememberAnimatedVectorPainter(
@@ -420,7 +488,7 @@ private fun AnimatedLogoIcon(
         atEnd
     )
     LaunchedEffect(Unit) {
-        while (true) {
+        while (isActive) {
             atEnd = !atEnd
             delay(animation.totalDuration.toLong())
         }

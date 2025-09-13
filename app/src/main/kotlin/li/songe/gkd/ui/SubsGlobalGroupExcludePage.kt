@@ -52,11 +52,11 @@ import com.blankj.utilcode.util.KeyboardUtils
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import kotlinx.coroutines.flow.update
+import li.songe.gkd.a11y.launcherAppId
 import li.songe.gkd.data.ExcludeData
 import li.songe.gkd.data.RawSubscription
 import li.songe.gkd.data.SubsConfig
 import li.songe.gkd.db.DbSet
-import li.songe.gkd.service.launcherAppId
 import li.songe.gkd.store.storeFlow
 import li.songe.gkd.ui.component.AnimatedIcon
 import li.songe.gkd.ui.component.AppBarTextField
@@ -69,7 +69,7 @@ import li.songe.gkd.ui.component.QueryPkgAuthCard
 import li.songe.gkd.ui.component.TowLineText
 import li.songe.gkd.ui.component.autoFocus
 import li.songe.gkd.ui.component.useListScrollState
-import li.songe.gkd.ui.local.LocalNavController
+import li.songe.gkd.ui.share.LocalNavController
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.ProfileTransitions
 import li.songe.gkd.ui.style.itemFlagPadding
@@ -277,7 +277,7 @@ fun SubsGlobalGroupExcludePage(subsItemId: Long, groupKey: Int) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    AppIcon(appInfo = appInfo)
+                    AppIcon(appId = appInfo.id)
                     Spacer(modifier = Modifier.width(12.dp))
 
                     Column(
@@ -310,7 +310,7 @@ fun SubsGlobalGroupExcludePage(subsItemId: Long, groupKey: Int) {
                             key(appInfo.id) {
                                 Switch(
                                     checked = checked,
-                                    onCheckedChange = throttle(vm.viewModelScope.launchAsFn<Boolean> { newChecked ->
+                                    onCheckedChange = throttle(vm.viewModelScope.launchAsFn { newChecked ->
                                         val subsConfig = (vm.subsConfigFlow.value ?: SubsConfig(
                                             type = SubsConfig.GlobalGroupType,
                                             subsId = subsItemId,
@@ -358,7 +358,9 @@ fun SubsGlobalGroupExcludePage(subsItemId: Long, groupKey: Int) {
                 OutlinedTextField(
                     value = source,
                     onValueChange = { source = it },
-                    modifier = Modifier.fillMaxWidth().autoFocus(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .autoFocus(),
                     placeholder = {
                         Text(
                             text = tipText,

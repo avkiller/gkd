@@ -1,74 +1,58 @@
 package li.songe.gkd.shizuku
 
+import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.IPackageManager
 import android.content.pm.PackageInfo
-import com.blankj.utilcode.util.LogUtils
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import li.songe.gkd.appScope
-import li.songe.gkd.permission.shizukuOkState
-import li.songe.gkd.store.shizukuStoreFlow
-import rikka.shizuku.ShizukuBinderWrapper
-import rikka.shizuku.SystemServiceHelper
-import kotlin.reflect.full.declaredFunctions
+import li.songe.gkd.util.checkExistClass
 import kotlin.reflect.typeOf
 
 
-private var packageFlagsParamsLongType: Boolean? = null
+private var pkgFcType: Int? = null
 private fun IPackageManager.compatGetInstalledPackages(
-    flags: Long,
+    flags: Int,
     userId: Int
 ): List<PackageInfo> {
-    if (packageFlagsParamsLongType == null) {
-        val method = this::class.declaredFunctions.find { it.name == "getInstalledPackages" }!!
-        packageFlagsParamsLongType = method.parameters[1].type == typeOf<Long>()
-    }
-    return if (packageFlagsParamsLongType == true) {
-        getInstalledPackages(flags, userId).list
-    } else {
-        getInstalledPackages(flags.toInt(), userId).list
-    }
-}
-
-interface SafePackageManager {
-    fun compatGetInstalledPackages(flags: Long, userId: Int): List<PackageInfo>
-    fun getAllIntentFilters(packageName: String): List<IntentFilter>
-}
-
-fun newPackageManager(): SafePackageManager? {
-    val service = SystemServiceHelper.getSystemService("package")
-    if (service == null) {
-        LogUtils.d("shizuku 无法获取 package")
-        return null
-    }
-    val manager = service.let(::ShizukuBinderWrapper).let(IPackageManager.Stub::asInterface)
-    return object : SafePackageManager {
-        override fun compatGetInstalledPackages(flags: Long, userId: Int) =
-            manager.compatGetInstalledPackages(flags, userId)
-
-        override fun getAllIntentFilters(packageName: String) =
-            manager.getAllIntentFilters(packageName).list
+    pkgFcType = pkgFcType ?: findCompatMethod(
+        "getInstalledPackages",
+        listOf(
+            1 to listOf(typeOf<Int>(), typeOf<Int>()),
+            2 to listOf(typeOf<Long>(), typeOf<Int>()),
+        )
+    )
+    return when (pkgFcType) {
+        1 -> getInstalledPackages(flags, userId).list
+        2 -> getInstalledPackages(flags.toLong(), userId).list
+        else -> emptyList()
     }
 }
 
-val shizukuWorkProfileUsedFlow by lazy {
-    combine(shizukuOkState.stateFlow, shizukuStoreFlow) { shizukuOk, store ->
-        shizukuOk && store.enableWorkProfile
-    }.stateIn(appScope, SharingStarted.Eagerly, false)
-}
+class SafePackageManager(private val value: IPackageManager) {
+    companion object {
+        val isAvailable: Boolean
+            get() = checkExistClass("android.content.pm.IPackageManager")
 
-val packageManagerFlow by lazy<StateFlow<SafePackageManager?>> {
-    val stateFlow = MutableStateFlow<SafePackageManager?>(null)
-    appScope.launch(Dispatchers.IO) {
-        shizukuWorkProfileUsedFlow.collect {
-            stateFlow.value = if (it) newPackageManager() else null
+        fun newBinder() = getStubService(
+            "package",
+            isAvailable
+        )?.let {
+            SafePackageManager(IPackageManager.Stub.asInterface(it))
         }
     }
-    stateFlow
+
+    fun getInstalledPackages(flags: Int, userId: Int): List<PackageInfo> {
+        return safeInvokeMethod { value.compatGetInstalledPackages(flags, userId) } ?: emptyList()
+    }
+
+    fun getAllIntentFilters(packageName: String): List<IntentFilter> {
+        return safeInvokeMethod { value.getAllIntentFilters(packageName).list } ?: emptyList()
+    }
+
+    fun checkAppHidden(appId: String): Boolean {
+        return !getAllIntentFilters(appId).any { f ->
+            f.hasAction(Intent.ACTION_MAIN) && f.hasCategory(
+                Intent.CATEGORY_LAUNCHER
+            )
+        }
+    }
 }

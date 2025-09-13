@@ -2,8 +2,12 @@ package li.songe.gkd.util
 
 import android.app.Activity
 import android.content.ComponentName
+import android.content.pm.PackageInfo
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.drawable.Drawable
 import android.os.Build
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.ContentTransform
@@ -13,10 +17,12 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.ui.unit.sp
 import androidx.core.graphics.get
 import com.blankj.utilcode.util.LogUtils
 import li.songe.gkd.META
 import li.songe.gkd.MainActivity
+import li.songe.gkd.app
 import li.songe.json5.Json5EncoderConfig
 import li.songe.json5.encodeToJson5String
 import java.io.DataOutputStream
@@ -32,11 +38,10 @@ private val componentNameCache by lazy { HashMap<String, ComponentName>() }
 val KClass<*>.componentName
     get() = componentNameCache.getOrPut(jvmName) { ComponentName(META.appId, jvmName) }
 
-fun Bitmap.isEmptyBitmap(): Boolean {
-    // png
+fun Bitmap.isFullTransparent(): Boolean {
     repeat(width) { x ->
         repeat(height) { y ->
-            if (this[x, y] != 0) {
+            if (this[x, y] != Color.TRANSPARENT) {
                 return false
             }
         }
@@ -106,7 +111,48 @@ suspend fun runCommandByRoot(commandText: String) {
     stopCoroutine()
 }
 
-val defaultJson5Config = Json5EncoderConfig(indent = "\u0020\u0020")
+val defaultJson5Config = Json5EncoderConfig(indent = "\u0020\u0020", trailingComma = true)
 inline fun <reified T> toJson5String(value: T): String {
     return json.encodeToJson5String(value, defaultJson5Config)
 }
+
+fun drawTextToBitmap(text: String, bitmap: Bitmap) {
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textSize = 32.sp.px
+        color = Color.BLUE
+        textAlign = Paint.Align.CENTER
+    }
+    val canvas = Canvas(bitmap)
+    val strList = text.split('\n')
+    strList.forEachIndexed { i, str ->
+        canvas.drawText(
+            str,
+            bitmap.width / 2f,
+            (bitmap.height / 2f) + (i - strList.size / 2f) * (paint.textSize + 4.sp.px),
+            paint
+        )
+    }
+}
+
+// https://github.com/gkd-kit/gkd/issues/44
+// java.lang.ClassNotFoundException:Didn't find class "android.app.IActivityTaskManager" on path: DexPathList
+private val clazzMap = HashMap<String, Boolean>()
+fun checkExistClass(className: String): Boolean = clazzMap[className] ?: try {
+    Class.forName(className)
+    true
+} catch (_: Throwable) {
+    false
+}.apply {
+    clazzMap[className] = this
+}
+
+// https://github.com/gkd-kit/gkd/issues/924
+private val Drawable.safeDrawable: Drawable?
+    get() = if (intrinsicHeight > 0 && intrinsicWidth > 0) {
+        this
+    } else {
+        null
+    }
+
+val PackageInfo.pkgIcon: Drawable?
+    get() = applicationInfo?.loadIcon(app.packageManager)?.safeDrawable

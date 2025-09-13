@@ -22,7 +22,6 @@ import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.outlined.Equalizer
-import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.RocketLaunch
@@ -52,18 +51,17 @@ import com.ramcosta.composedestinations.generated.destinations.AppConfigPageDest
 import com.ramcosta.composedestinations.generated.destinations.AuthA11YPageDestination
 import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
 import li.songe.gkd.MainActivity
-import li.songe.gkd.a11yServiceEnabledFlow
 import li.songe.gkd.permission.foregroundServiceSpecialUseState
 import li.songe.gkd.permission.notificationState
 import li.songe.gkd.permission.requiredPermission
 import li.songe.gkd.permission.writeSecureSettingsState
 import li.songe.gkd.service.A11yService
-import li.songe.gkd.service.ManageService
+import li.songe.gkd.service.StatusService
 import li.songe.gkd.service.switchA11yService
 import li.songe.gkd.store.storeFlow
 import li.songe.gkd.ui.component.GroupNameText
 import li.songe.gkd.ui.component.textSize
-import li.songe.gkd.ui.local.LocalMainViewModel
+import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.itemHorizontalPadding
 import li.songe.gkd.ui.style.itemVerticalPadding
@@ -73,8 +71,6 @@ import li.songe.gkd.util.SafeR
 import li.songe.gkd.util.launchAsFn
 import li.songe.gkd.util.throttle
 
-val controlNav = BottomNavItem(label = "主页", icon = Icons.Outlined.Home)
-
 @Composable
 fun useControlPage(): ScaffoldExt {
     val context = LocalActivity.current as MainActivity
@@ -82,9 +78,8 @@ fun useControlPage(): ScaffoldExt {
     val vm = viewModel<HomeVm>()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val scrollState = rememberScrollState()
-    val writeSecureSettings by writeSecureSettingsState.stateFlow.collectAsState()
     return ScaffoldExt(
-        navItem = controlNav,
+        navItem = BottomNavItem.Control,
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(scrollBehavior = scrollBehavior, title = {
@@ -106,11 +101,8 @@ fun useControlPage(): ScaffoldExt {
         val store by storeFlow.collectAsState()
 
         val a11yRunning by A11yService.isRunning.collectAsState()
-        val manageRunning by ManageService.isRunning.collectAsState()
-        val a11yServiceEnabled by a11yServiceEnabledFlow.collectAsState()
-
-        // 无障碍故障: 设置中无障碍开启, 但是实际 service 没有运行
-        val a11yBroken = !a11yRunning && a11yServiceEnabled
+        val manageRunning by StatusService.isRunning.collectAsState()
+        val writeSecureSettings by writeSecureSettingsState.stateFlow.collectAsState()
 
         Column(
             modifier = Modifier
@@ -120,7 +112,15 @@ fun useControlPage(): ScaffoldExt {
             PageItemCard(
                 imageVector = Icons.Default.Memory,
                 title = "服务状态",
-                subtitle = if (a11yRunning) "无障碍服务正在运行" else if (a11yBroken) "无障碍服务发生故障" else if (writeSecureSettings) "无障碍服务已关闭" else "无障碍服务未授权",
+                subtitle = if (a11yRunning) {
+                    "无障碍服务正在运行"
+                } else if (mainVm.a11yServiceEnabledFlow.collectAsState().value) {
+                    "无障碍服务发生故障"
+                } else if (writeSecureSettings) {
+                    "无障碍服务已关闭"
+                } else {
+                    "无障碍服务未授权"
+                },
                 rightContent = {
                     Switch(
                         checked = a11yRunning,
@@ -146,9 +146,9 @@ fun useControlPage(): ScaffoldExt {
                             if (it) {
                                 requiredPermission(context, foregroundServiceSpecialUseState)
                                 requiredPermission(context, notificationState)
-                                ManageService.start()
+                                StatusService.start()
                             } else {
-                                ManageService.stop()
+                                StatusService.stop()
                             }
                             storeFlow.value = store.copy(
                                 enableStatusService = it

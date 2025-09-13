@@ -51,6 +51,7 @@ plugins {
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlinx.atomicfu)
     alias(libs.plugins.google.ksp)
 }
 
@@ -177,6 +178,7 @@ kotlin {
             "-opt-in=androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi",
             "-opt-in=androidx.compose.ui.ExperimentalComposeUiApi",
             "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi",
+            "-Xcontext-parameters"
         )
     }
 }
@@ -184,14 +186,6 @@ kotlin {
 // https://developer.android.com/jetpack/androidx/releases/room?hl=zh-cn#compiler-options
 room {
     schemaDirectory("$projectDir/schemas")
-}
-ksp {
-    arg("room.generateKotlin", "true")
-}
-
-configurations.configureEach {
-    //    https://github.com/Kotlin/kotlinx.coroutines/issues/2023
-    exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-debug")
 }
 
 composeCompiler {
@@ -209,6 +203,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.service)
 
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.graphics)
@@ -252,10 +247,11 @@ dependencies {
     implementation(libs.google.accompanist.drawablepainter)
 
     implementation(libs.kotlinx.serialization.json)
+    // https://github.com/Kotlin/kotlinx-atomicfu/issues/145
+    implementation(libs.kotlinx.atomicfu)
 
     implementation(libs.utilcodex)
     implementation(libs.activityResultLauncher)
-    implementation(libs.floatingBubbleView)
 
     implementation(libs.destinations.core)
     ksp(libs.destinations.ksp)

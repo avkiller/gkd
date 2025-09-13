@@ -1,6 +1,5 @@
 package li.songe.gkd.util
 
-import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
@@ -20,17 +19,22 @@ import android.widget.Toast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.toColorInt
+import com.blankj.utilcode.util.ClipboardUtils
 import com.blankj.utilcode.util.ScreenUtils
 import com.hjq.toast.Toaster
 import com.hjq.toast.style.WhiteToastStyle
 import kotlinx.coroutines.Dispatchers
 import li.songe.gkd.app
 import li.songe.gkd.appScope
+import li.songe.gkd.service.A11yService
 import li.songe.gkd.store.storeFlow
 
-
-fun toast(text: CharSequence) {
-    Toaster.show(text)
+fun toast(text: CharSequence, delayMillis: Long = 0L) {
+    if (delayMillis > 0) {
+        Toaster.delayedShow(text, delayMillis)
+    } else {
+        Toaster.show(text)
+    }
 }
 
 private val darkTheme: Boolean
@@ -83,7 +87,7 @@ private fun View.updateToastView() {
     clipToOutline = true
 }
 
-fun setReactiveToastStyle() {
+private fun setReactiveToastStyle() {
     Toaster.setStyle(object : WhiteToastStyle() {
         override fun getGravity() = Gravity.BOTTOM
         override fun getYOffset() = toastYOffset
@@ -98,18 +102,17 @@ fun setReactiveToastStyle() {
 
 private var triggerTime = 0L
 private const val triggerInterval = 2000L
-fun showActionToast(context: AccessibilityService) {
+fun showActionToast() {
     if (!storeFlow.value.toastWhenClick) return
     appScope.launchTry(Dispatchers.Main) {
         val t = System.currentTimeMillis()
         if (t - triggerTime > triggerInterval + 100) { // 100ms 保证二次显示的时候上一次已经完全消失
             triggerTime = t
             if (storeFlow.value.useSystemToast) {
-                showSystemToast(storeFlow.value.clickToast)
+                showSystemToast(storeFlow.value.actionToast)
             } else {
-                showAccessibilityToast(
-                    context,
-                    storeFlow.value.clickToast
+                showA11yToast(
+                    storeFlow.value.actionToast
                 )
             }
         }
@@ -128,9 +131,10 @@ private fun showSystemToast(message: CharSequence) {
 // 2.使用协程 delay + cacheView 也可能导致无法取消
 // https://github.com/gkd-kit/gkd/issues/697
 // https://github.com/gkd-kit/gkd/issues/698
-private fun showAccessibilityToast(context: AccessibilityService, message: CharSequence) {
-    val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-    val textView = TextView(context).apply {
+private fun showA11yToast(message: CharSequence) {
+    val service = A11yService.instance ?: return
+    val wm = service.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    val textView = TextView(service).apply {
         text = message
         id = android.R.id.message
         gravity = Gravity.CENTER
@@ -146,7 +150,7 @@ private fun showAccessibilityToast(context: AccessibilityService, message: CharS
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
         ).reduce { acc, i -> acc or i }
-        packageName = context.packageName
+        packageName = service.packageName
         width = WindowManager.LayoutParams.WRAP_CONTENT
         height = WindowManager.LayoutParams.WRAP_CONTENT
         gravity = Gravity.BOTTOM
@@ -160,4 +164,14 @@ private fun showAccessibilityToast(context: AccessibilityService, message: CharS
         } catch (_: Exception) {
         }
     }, triggerInterval)
+}
+
+fun copyText(text: String) {
+    ClipboardUtils.copyText(text)
+    toast("复制成功")
+}
+
+fun initToast() {
+    Toaster.init(app)
+    setReactiveToastStyle()
 }

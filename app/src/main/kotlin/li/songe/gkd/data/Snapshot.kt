@@ -11,9 +11,8 @@ import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
-import li.songe.gkd.debug.SnapshotExt
+import li.songe.gkd.util.SnapshotExt
 import li.songe.gkd.util.format
-import java.io.File
 
 @Entity(
     tableName = "snapshot",
@@ -22,11 +21,8 @@ import java.io.File
 data class Snapshot(
     @PrimaryKey @ColumnInfo(name = "id") override val id: Long,
 
-    @ColumnInfo(name = "app_id") override val appId: String?,
+    @ColumnInfo(name = "app_id") override val appId: String,
     @ColumnInfo(name = "activity_id") override val activityId: String?,
-    @ColumnInfo(name = "app_name") override val appName: String?,
-    @ColumnInfo(name = "app_version_code") override val appVersionCode: Long?,
-    @ColumnInfo(name = "app_version_name") override val appVersionName: String?,
 
     @ColumnInfo(name = "screen_height") override val screenHeight: Int,
     @ColumnInfo(name = "screen_width") override val screenWidth: Int,
@@ -38,13 +34,7 @@ data class Snapshot(
 
     val date by lazy { id.format("MM-dd HH:mm:ss") }
 
-    val screenshotFile by lazy {
-        File(
-            SnapshotExt.getScreenshotPath(
-                id
-            )
-        )
-    }
+    val screenshotFile by lazy { SnapshotExt.screenshotFile(id) }
 
     @Dao
     interface SnapshotDao {

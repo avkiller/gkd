@@ -22,7 +22,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
@@ -75,7 +74,7 @@ import li.songe.gkd.ui.component.AnimationFloatingActionButton
 import li.songe.gkd.ui.component.SubsItemCard
 import li.songe.gkd.ui.component.TextMenu
 import li.songe.gkd.ui.component.waitResult
-import li.songe.gkd.ui.local.LocalMainViewModel
+import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.itemVerticalPadding
 import li.songe.gkd.util.LIST_PLACEHOLDER_KEY
@@ -89,7 +88,7 @@ import li.songe.gkd.util.findOption
 import li.songe.gkd.util.getUpDownTransform
 import li.songe.gkd.util.launchAsFn
 import li.songe.gkd.util.launchTry
-import li.songe.gkd.util.map
+import li.songe.gkd.util.mapState
 import li.songe.gkd.util.ruleSummaryFlow
 import li.songe.gkd.util.subsIdToRawFlow
 import li.songe.gkd.util.subsItemsFlow
@@ -99,10 +98,6 @@ import li.songe.gkd.util.updateSubsMutex
 import li.songe.gkd.util.usedSubsEntriesFlow
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
-
-val subsNav = BottomNavItem(
-    label = "订阅", icon = Icons.AutoMirrored.Filled.FormatListBulleted
-)
 
 @Composable
 fun useSubsManagePage(): ScaffoldExt {
@@ -194,7 +189,7 @@ fun useSubsManagePage(): ScaffoldExt {
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     return ScaffoldExt(
-        navItem = subsNav,
+        navItem = BottomNavItem.SubsManage,
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(scrollBehavior = scrollBehavior, navigationIcon = {
@@ -213,7 +208,7 @@ fun useSubsManagePage(): ScaffoldExt {
                     )
                 } else {
                     Text(
-                        text = subsNav.label,
+                        text = BottomNavItem.SubsManage.label,
                     )
                 }
             }, actions = {
@@ -279,7 +274,7 @@ fun useSubsManagePage(): ScaffoldExt {
                             IconButton(onClick = throttle { switchStoreEnableMatch() }) {
                                 val scope = rememberCoroutineScope()
                                 val enableMatch by remember {
-                                    storeFlow.map(scope) { s -> s.enableMatch }
+                                    storeFlow.mapState(scope) { s -> s.enableMatch }
                                 }.collectAsState()
                                 val id = if (enableMatch) SafeR.ic_flash_on else SafeR.ic_flash_off
                                 Icon(
@@ -443,7 +438,7 @@ fun useSubsManagePage(): ScaffoldExt {
                 itemsIndexed(orderSubItems, { _, subItem -> subItem.id }) { index, subItem ->
                     val canDrag = !refreshing && orderSubItems.size > 1
                     ReorderableItem(
-                        reorderableLazyColumnState,
+                        state = reorderableLazyColumnState,
                         key = subItem.id,
                         enabled = canDrag,
                     ) {
