@@ -8,15 +8,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -35,8 +30,10 @@ import li.songe.gkd.permission.foregroundServiceSpecialUseState
 import li.songe.gkd.ui.component.AuthButtonGroup
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.ManualAuthDialog
+import li.songe.gkd.ui.component.PerfIcon
+import li.songe.gkd.ui.component.PerfIconButton
+import li.songe.gkd.ui.component.PerfTopAppBar
 import li.songe.gkd.ui.share.LocalMainViewModel
-import li.songe.gkd.ui.share.LocalNavController
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.ProfileTransitions
 import li.songe.gkd.ui.style.cardHorizontalPadding
@@ -50,21 +47,15 @@ import li.songe.gkd.util.toast
 @Composable
 fun AppOpsAllowPage() {
     val mainVm = LocalMainViewModel.current
-    val navController = LocalNavController.current
     val vm = viewModel<AppOpsAllowVm>()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val foregroundServiceSpecialUse by foregroundServiceSpecialUseState.stateFlow.collectAsStateWithLifecycle()
     val restrictedCount = arrayOf(foregroundServiceSpecialUse).count { !it }
     Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
-        TopAppBar(scrollBehavior = scrollBehavior, navigationIcon = {
-            IconButton(onClick = {
-                navController.popBackStack()
-            }) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = null,
-                )
-            }
+        PerfTopAppBar(scrollBehavior = scrollBehavior, navigationIcon = {
+            PerfIconButton(imageVector = PerfIcon.ArrowBack, onClick = {
+                mainVm.popBackStack()
+            })
         }, title = {
             Text(text = "解除限制")
         })

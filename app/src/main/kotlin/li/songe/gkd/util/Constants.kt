@@ -1,7 +1,5 @@
 package li.songe.gkd.util
 
-import kotlin.math.PI
-
 const val FILE_SHORT_URL = "https://f.gkd.li/"
 const val IMPORT_SHORT_URL = "https://i.gkd.li/i/"
 
@@ -35,6 +33,6 @@ object ShortUrlSet {
 
 const val shizukuAppId = "moe.shizuku.privileged.api"
 
-const val LIST_PLACEHOLDER_KEY = PI
-
 const val PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=li.songe.gkd"
+
+const val systemUiAppId = "com.android.systemui"

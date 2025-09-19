@@ -9,24 +9,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +36,9 @@ import li.songe.gkd.db.DbSet
 import li.songe.gkd.ui.component.AnimationFloatingActionButton
 import li.songe.gkd.ui.component.BatchActionButtonGroup
 import li.songe.gkd.ui.component.EmptyText
+import li.songe.gkd.ui.component.PerfIcon
+import li.songe.gkd.ui.component.PerfIconButton
+import li.songe.gkd.ui.component.PerfTopAppBar
 import li.songe.gkd.ui.component.RuleGroupCard
 import li.songe.gkd.ui.component.TowLineText
 import li.songe.gkd.ui.component.animateListItem
@@ -48,12 +46,12 @@ import li.songe.gkd.ui.component.toGroupState
 import li.songe.gkd.ui.component.useListScrollState
 import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.icon.BackCloseIcon
+import li.songe.gkd.ui.share.ListPlaceholder
 import li.songe.gkd.ui.share.LocalMainViewModel
-import li.songe.gkd.ui.share.LocalNavController
+import li.songe.gkd.ui.share.noRippleClickable
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.ProfileTransitions
 import li.songe.gkd.ui.style.scaffoldPadding
-import li.songe.gkd.util.LIST_PLACEHOLDER_KEY
 import li.songe.gkd.util.copyText
 import li.songe.gkd.util.getUpDownTransform
 import li.songe.gkd.util.launchAsFn
@@ -71,14 +69,13 @@ fun SubsAppGroupListPage(
     @Suppress("unused") focusGroupKey: Int? = null, // 背景/边框高亮一下
 ) {
     val mainVm = LocalMainViewModel.current
-    val navController = LocalNavController.current
     val vm = viewModel<SubsAppGroupListVm>()
-    val subs = vm.subsRawFlow.collectAsState().value
+    val subs = vm.subsFlow.collectAsState().value
     val subsConfigs by vm.subsConfigsFlow.collectAsState()
     val categoryConfigs by vm.categoryConfigsFlow.collectAsState()
     val app by vm.subsAppFlow.collectAsState()
 
-    val groupToCategoryMap = subs?.groupToCategoryMap ?: emptyMap()
+    val groupToCategoryMap = subs.groupToCategoryMap
 
     val editable = subsItemId < 0
     val isSelectedMode = vm.isSelectedModeFlow.collectAsState().value
@@ -96,7 +93,8 @@ fun SubsAppGroupListPage(
     BackHandler(isSelectedMode) {
         vm.isSelectedModeFlow.value = false
     }
-    val (scrollBehavior, listState) = useListScrollState(app.groups.isEmpty())
+    val resetKey = rememberSaveable { mutableIntStateOf(0) }
+    val (scrollBehavior, listState) = useListScrollState(resetKey, app.groups.isEmpty())
     if (focusGroupKey != null) {
         LaunchedEffect(null) {
             if (vm.focusGroupFlow?.value != null) {
@@ -108,24 +106,27 @@ fun SubsAppGroupListPage(
         }
     }
     Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
-        TopAppBar(scrollBehavior = scrollBehavior, navigationIcon = {
+        PerfTopAppBar(scrollBehavior = scrollBehavior, navigationIcon = {
             IconButton(onClick = throttle {
                 if (isSelectedMode) {
                     vm.isSelectedModeFlow.value = false
                 } else {
-                    navController.popBackStack()
+                    mainVm.popBackStack()
                 }
             }) {
                 BackCloseIcon(backOrClose = !isSelectedMode)
             }
         }, title = {
+            val titleModifier = Modifier.noRippleClickable { resetKey.intValue++ }
             if (isSelectedMode) {
                 Text(
+                    modifier = titleModifier,
                     text = if (selectedDataSet.isNotEmpty()) selectedDataSet.size.toString() else "",
                 )
             } else {
                 TowLineText(
-                    title = subs?.name ?: subsItemId.toString(),
+                    modifier = titleModifier,
+                    title = subs.name,
                     subtitle = appId,
                     showApp = true,
                 )
@@ -139,73 +140,63 @@ fun SubsAppGroupListPage(
             ) {
                 if (it) {
                     Row {
-                        IconButton(onClick = throttle(vm.viewModelScope.launchAsFn(Dispatchers.Default) {
-                            val copyGroups = app.groups.filter { g ->
-                                selectedDataSet.any { it.groupKey == g.key }
-                            }
-                            val str = toJson5String(app.copy(groups = copyGroups))
-                            copyText(str)
-                        })) {
-                            Icon(
-                                imageVector = Icons.Outlined.ContentCopy,
-                                contentDescription = null,
-                            )
-                        }
+                        PerfIconButton(
+                            imageVector = PerfIcon.ContentCopy,
+                            onClick = throttle(vm.viewModelScope.launchAsFn(Dispatchers.Default) {
+                                val copyGroups = app.groups.filter { g ->
+                                    selectedDataSet.any { s -> s.groupKey == g.key }
+                                }
+                                val str = toJson5String(app.copy(groups = copyGroups))
+                                copyText(str)
+                            })
+                        )
                         BatchActionButtonGroup(vm, selectedDataSet)
                         if (editable) {
-                            IconButton(onClick = throttle(vm.viewModelScope.launchAsFn {
-                                subs!!
-                                mainVm.dialogFlow.waitResult(
-                                    title = "删除规则组",
-                                    text = "删除当前所选规则组?",
-                                    error = true,
-                                )
-                                val keys = selectedDataSet.mapNotNull { it.groupKey }
-                                vm.isSelectedModeFlow.value = false
-                                if (keys.size == app.groups.size) {
-                                    updateSubscription(
-                                        subs.copy(
-                                            apps = subs.apps.filter { a -> a.id != appId }
+                            PerfIconButton(
+                                imageVector = PerfIcon.Delete,
+                                onClick = throttle(vm.viewModelScope.launchAsFn {
+                                    mainVm.dialogFlow.waitResult(
+                                        title = "删除规则组",
+                                        text = "删除当前所选规则组?",
+                                        error = true,
+                                    )
+                                    val keys = selectedDataSet.mapNotNull { g -> g.groupKey }
+                                    vm.isSelectedModeFlow.value = false
+                                    if (keys.size == app.groups.size) {
+                                        updateSubscription(
+                                            subs.copy(
+                                                apps = subs.apps.filter { a -> a.id != appId }
+                                            )
                                         )
-                                    )
-                                    DbSet.subsConfigDao.deleteAppConfig(subsItemId, appId)
-                                } else {
-                                    updateSubscription(
-                                        subs.copy(
-                                            apps = subs.apps.toMutableList().apply {
-                                                set(
-                                                    indexOfFirst { it.id == appId },
-                                                    app.copy(groups = app.groups.filterNot { g ->
-                                                        keys.contains(
-                                                            g.key
-                                                        )
-                                                    })
-                                                )
-                                            }
+                                        DbSet.subsConfigDao.deleteAppConfig(subsItemId, appId)
+                                    } else {
+                                        updateSubscription(
+                                            subs.copy(
+                                                apps = subs.apps.toMutableList().apply {
+                                                    set(
+                                                        indexOfFirst { a -> a.id == appId },
+                                                        app.copy(groups = app.groups.filterNot { g ->
+                                                            keys.contains(
+                                                                g.key
+                                                            )
+                                                        })
+                                                    )
+                                                }
+                                            )
                                         )
-                                    )
-                                    DbSet.subsConfigDao.batchDeleteAppGroupConfig(
-                                        subsItemId,
-                                        appId,
-                                        keys
-                                    )
-                                }
-                                toast("删除成功")
-                            })) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Delete,
-                                    contentDescription = null,
-                                )
-                            }
-                        }
-                        IconButton(onClick = {
-                            expanded = true
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = null,
+                                        DbSet.subsConfigDao.batchDeleteAppGroupConfig(
+                                            subsItemId,
+                                            appId,
+                                            keys
+                                        )
+                                    }
+                                    toast("删除成功")
+                                })
                             )
                         }
+                        PerfIconButton(imageVector = PerfIcon.MoreVert, onClick = {
+                            expanded = true
+                        })
                     }
                 }
             }
@@ -255,7 +246,7 @@ fun SubsAppGroupListPage(
         if (editable) {
             AnimationFloatingActionButton(
                 visible = !isSelectedMode,
-                onClick = throttle {
+                onClick = {
                     mainVm.navigatePage(
                         UpsertRuleGroupPageDestination(
                             subsId = subsItemId,
@@ -265,9 +256,8 @@ fun SubsAppGroupListPage(
                     )
                 },
                 content = {
-                    Icon(
-                        imageVector = Icons.Outlined.Add,
-                        contentDescription = null,
+                    PerfIcon(
+                        imageVector = PerfIcon.Add,
                     )
                 }
             )
@@ -285,13 +275,12 @@ fun SubsAppGroupListPage(
                 }
                 RuleGroupCard(
                     modifier = Modifier.animateListItem(this),
-                    subs = subs!!,
+                    subs = subs,
                     appId = appId,
                     group = group,
                     category = category,
                     subsConfig = subsConfig,
                     categoryConfig = categoryConfig,
-                    showBottom = group !== app.groups.last(),
                     focusGroupFlow = vm.focusGroupFlow,
                     isSelectedMode = isSelectedMode,
                     isSelected = selectedDataSet.any { it.groupKey == group.key },
@@ -313,12 +302,10 @@ fun SubsAppGroupListPage(
                     }
                 )
             }
-            item(LIST_PLACEHOLDER_KEY) {
+            item(ListPlaceholder.KEY, ListPlaceholder.TYPE) {
                 Spacer(modifier = Modifier.height(EmptyHeight))
                 if (app.groups.isEmpty()) {
                     EmptyText(text = "暂无规则")
-                } else if (editable) {
-                    Spacer(modifier = Modifier.height(EmptyHeight))
                 }
             }
         }

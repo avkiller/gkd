@@ -1,12 +1,12 @@
 package li.songe.gkd
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.webkit.URLUtil
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
@@ -20,6 +20,8 @@ import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,8 +41,10 @@ import li.songe.gkd.ui.component.InputSubsLinkOption
 import li.songe.gkd.ui.component.RuleGroupState
 import li.songe.gkd.ui.component.UploadOptions
 import li.songe.gkd.ui.home.BottomNavItem
+import li.songe.gkd.ui.share.BaseViewModel
 import li.songe.gkd.util.LOCAL_SUBS_ID
 import li.songe.gkd.util.OnSimpleLife
+import li.songe.gkd.util.ThrottleTimer
 import li.songe.gkd.util.UpdateStatus
 import li.songe.gkd.util.appIconMapFlow
 import li.songe.gkd.util.clearCache
@@ -59,23 +63,55 @@ import kotlin.reflect.jvm.jvmName
 
 private var tempTermsAccepted = false
 
-class MainViewModel : ViewModel(), OnSimpleLife {
+class MainViewModel : BaseViewModel(), OnSimpleLife {
+    companion object {
+        private var _instance: MainViewModel? = null
+        val instance get() = _instance!!
+    }
+
+    init {
+        _instance = this
+        addCloseable { _instance = null }
+    }
 
     private lateinit var navController: NavHostController
     fun updateNavController(navController: NavHostController) {
         this.navController = navController
     }
 
+    private val backThrottleTimer = ThrottleTimer()
     fun popBackStack() {
+        if (!backThrottleTimer.expired()) return
+        @SuppressLint("RestrictedApi")
+        if (navController.currentBackStack.value.size == 1) return
         if (Looper.getMainLooper() == Looper.myLooper()) {
             navController.popBackStack()
         } else {
-            viewModelScope.launch {
-                withContext(Dispatchers.Main) {
-                    navController.popBackStack()
-                }
+            Handler(Looper.getMainLooper()).post {
+                navController.popBackStack()
             }
         }
+    }
+
+    fun navigatePage(direction: Direction, builder: (NavOptionsBuilder.() -> Unit)? = null) {
+        if (direction.route == navController.currentDestination?.route) {
+            return
+        }
+        if (Looper.getMainLooper() != Looper.myLooper()) {
+            Handler(Looper.getMainLooper()).post {
+                navigatePage(direction, builder)
+            }
+            return
+        }
+        if (builder != null) {
+            navController.navigate(direction.route, builder)
+        } else {
+            navController.navigate(direction.route)
+        }
+    }
+
+    fun navigateWebPage(url: String) {
+        navigatePage(WebViewPageDestination(url))
     }
 
     val dialogFlow = MutableStateFlow<AlertDialogOptions?>(null)
@@ -94,6 +130,11 @@ class MainViewModel : ViewModel(), OnSimpleLife {
     val sheetSubsIdFlow = MutableStateFlow<Long?>(null)
 
     val showShareDataIdsFlow = MutableStateFlow<Set<Long>?>(null)
+
+    val appOrderListFlow = DbSet.actionLogDao.queryLatestUniqueAppIds().stateInit(emptyList())
+    val appVisitOrderMapFlow = DbSet.appVisitLogDao.query().map {
+        it.mapIndexed { i, appId -> appId to i }.toMap()
+    }.debounce(500).stateInit(emptyMap())
 
     fun addOrModifySubs(
         url: String,
@@ -151,10 +192,10 @@ class MainViewModel : ViewModel(), OnSimpleLife {
 
     val ruleGroupState = RuleGroupState(this)
 
-    val urlFlow = MutableStateFlow<String?>(null)
+    val textFlow = MutableStateFlow<String?>(null)
     fun openUrl(url: String) {
         if (URLUtil.isNetworkUrl(url)) {
-            urlFlow.value = url
+            textFlow.value = url
         } else {
             openUri(url)
         }
@@ -172,27 +213,6 @@ class MainViewModel : ViewModel(), OnSimpleLife {
         }
         tabFlow.value = navItem.key
         lastClickTabTime = System.currentTimeMillis()
-    }
-
-    fun navigatePage(direction: Direction, builder: (NavOptionsBuilder.() -> Unit)? = null) {
-        if (direction.route == navController.currentDestination?.route) {
-            return
-        }
-        if (Looper.getMainLooper() != Looper.myLooper()) {
-            Handler(Looper.getMainLooper()).postDelayed({
-                navigatePage(direction, builder)
-            }, 0)
-            return
-        }
-        if (builder != null) {
-            navController.navigate(direction.route, builder)
-        } else {
-            navController.navigate(direction.route)
-        }
-    }
-
-    fun navigateWebPage(url: String) {
-        navigatePage(WebViewPageDestination(url))
     }
 
     fun handleGkdUri(uri: Uri) {
