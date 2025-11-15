@@ -54,6 +54,7 @@ plugins {
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.rikka.refine)
     alias(libs.plugins.loc)
+    alias(libs.plugins.loc)
 }
 
 android {
@@ -113,6 +114,7 @@ android {
         all {
             if (gitInfo.tagName == null) {
                 versionNameSuffix = "-${gitInfo.commitId.take(7)}"
+                versionNameSuffix = "-${gitInfo.commitId.take(7)}"
             }
         }
         release {
@@ -127,6 +129,7 @@ android {
         debug {
             signingConfig = gkdSigningConfig
             applicationIdSuffix = ".debug"
+            resValue("color", "better_black", "#FF5D92")
             resValue("color", "better_black", "#FF5D92")
             debugSuffixPairList.onEach { (key, value) ->
                 resValue("string", key, "$value-debug")
@@ -173,6 +176,7 @@ kotlin {
         freeCompilerArgs.addAll(
             "-opt-in=kotlin.RequiresOptIn",
             "-opt-in=kotlin.contracts.ExperimentalContracts",
+            "-opt-in=kotlin.contracts.ExperimentalContracts",
             "-opt-in=kotlinx.coroutines.FlowPreview",
             "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
             "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
@@ -181,6 +185,8 @@ kotlin {
             "-opt-in=androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi",
             "-opt-in=androidx.compose.ui.ExperimentalComposeUiApi",
             "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi",
+            "-Xcontext-parameters",
+            "-XXLanguage:+MultiDollarInterpolation"
             "-Xcontext-parameters",
             "-XXLanguage:+MultiDollarInterpolation"
         )
@@ -275,6 +281,7 @@ dependencies {
     implementation(libs.permissions)
 
     implementation(libs.json5)
+    compileOnly(libs.loc.annotation)
     compileOnly(libs.loc.annotation)
 
     implementation(libs.kevinnzouWebview)
