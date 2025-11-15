@@ -5,10 +5,13 @@ import android.app.AppOpsManager
 import android.app.Application
 import android.app.KeyguardManager
 import android.content.ClipboardManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.os.PowerManager
 import android.provider.Settings
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
@@ -23,11 +26,13 @@ import li.songe.gkd.service.initA11yWhiteAppList
 import li.songe.gkd.shizuku.initShizuku
 import li.songe.gkd.store.initStore
 import li.songe.gkd.util.AndroidTarget
+import li.songe.gkd.util.PKG_FLAGS
 import li.songe.gkd.util.SafeR
 import li.songe.gkd.util.initAppState
 import li.songe.gkd.util.initSubsState
 import li.songe.gkd.util.initToast
 import li.songe.gkd.util.toJson5String
+import li.songe.gkd.util.toast
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 
 
@@ -74,6 +79,10 @@ data class AppMeta(
 val META by lazy { AppMeta() }
 
 class App : Application() {
+    companion object {
+        const val START_WAIT_TIME = 3000L
+    }
+
     init {
         innerApp = this
     }
@@ -94,21 +103,29 @@ class App : Application() {
         return Settings.Secure.putInt(contentResolver, name, value)
     }
 
-    fun getSecureA11yServices(): MutableSet<String> {
-        return (getSecureString(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: "").split(
+    fun getSecureA11yServices(): MutableSet<ComponentName> {
+        val value = getSecureString(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
+        if (value.isNullOrEmpty()) return mutableSetOf()
+        return value.split(
             ENABLED_ACCESSIBILITY_SERVICES_SEPARATOR
-        ).toHashSet()
+        ).mapNotNull { ComponentName.unflattenFromString(it) }.toHashSet()
     }
 
-    fun putSecureA11yServices(services: Set<String>) {
+    fun putSecureA11yServices(services: Set<ComponentName>) {
         putSecureString(
             Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
-            services.joinToString(ENABLED_ACCESSIBILITY_SERVICES_SEPARATOR.toString())
+            services.joinToString(ENABLED_ACCESSIBILITY_SERVICES_SEPARATOR.toString()) { it.flattenToShortString() }
         )
     }
 
     fun resolveAppId(intent: Intent): String? {
         return intent.resolveActivity(packageManager)?.packageName
+    }
+
+    fun getPkgInfo(appId: String): PackageInfo? = try {
+        packageManager.getPackageInfo(appId, PKG_FLAGS)
+    } catch (_: PackageManager.NameNotFoundException) {
+        null
     }
 
     fun resolveAppId(action: String, category: String? = null): String? {
@@ -123,7 +140,7 @@ class App : Application() {
     var justStarted: Boolean = true
         get() {
             if (field) {
-                field = System.currentTimeMillis() - startTime < 3_000
+                field = System.currentTimeMillis() - startTime < START_WAIT_TIME
             }
             return field
         }
@@ -134,6 +151,7 @@ class App : Application() {
     val windowManager by lazy { app.getSystemService(WINDOW_SERVICE) as WindowManager }
     val keyguardManager by lazy { app.getSystemService(KEYGUARD_SERVICE) as KeyguardManager }
     val clipboardManager by lazy { app.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager }
+    val powerManager by lazy { getSystemService(POWER_SERVICE) as PowerManager }
 
     override fun onCreate() {
         super.onCreate()
@@ -148,6 +166,7 @@ class App : Application() {
             toJson5String(META),
         )
         Thread.setDefaultUncaughtExceptionHandler { t, e ->
+            toast(e.message ?: e.toString())
             LogUtils.d("UncaughtExceptionHandler", t, e)
         }
         initToast()

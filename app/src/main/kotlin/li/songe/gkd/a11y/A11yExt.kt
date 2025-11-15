@@ -16,16 +16,18 @@ import li.songe.gkd.app
 import li.songe.gkd.service.A11yService
 import li.songe.gkd.util.AndroidTarget
 import li.songe.gkd.util.OnSimpleLife
+import li.songe.gkd.util.mapState
 import li.songe.selector.initDefaultTypeInfo
+import kotlin.contracts.contract
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 context(context: OnSimpleLife)
-fun useA11yServiceEnabledFlow(): StateFlow<Boolean> {
-    val stateFlow = MutableStateFlow(getA11yServiceEnabled())
+fun useEnabledA11yServicesFlow(): StateFlow<Set<ComponentName>> {
+    val stateFlow = MutableStateFlow(app.getSecureA11yServices())
     val contextObserver = object : ContentObserver(null) {
         override fun onChange(selfChange: Boolean) {
-            stateFlow.value = getA11yServiceEnabled()
+            stateFlow.value = app.getSecureA11yServices()
         }
     }
     app.contentResolver.registerContentObserver(
@@ -39,8 +41,11 @@ fun useA11yServiceEnabledFlow(): StateFlow<Boolean> {
     return stateFlow
 }
 
-private fun getA11yServiceEnabled(): Boolean = app.getSecureA11yServices().any {
-    ComponentName.unflattenFromString(it) == A11yService.a11yComponentName
+context(context: OnSimpleLife)
+fun useA11yServiceEnabledFlow(servicesFlow: StateFlow<Set<ComponentName>> = useEnabledA11yServicesFlow()): StateFlow<Boolean> {
+    return servicesFlow.mapState(context.scope) {
+        it.contains(A11yService.a11yCn)
+    }
 }
 
 const val STATE_CHANGED = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
@@ -109,8 +114,12 @@ val AccessibilityNodeInfo.compatChecked: Boolean?
 
 
 private const val interestedEvents = STATE_CHANGED or CONTENT_CHANGED
-val AccessibilityEvent.isUseful: Boolean
-    get() = packageName != null && className != null && eventType.and(interestedEvents) != 0
+fun AccessibilityEvent?.isUseful(): Boolean {
+    contract {
+        returns(true) implies (this@isUseful != null)
+    }
+    return (this != null && packageName != null && className != null && eventType and interestedEvents != 0)
+}
 
 
 suspend fun AccessibilityService.screenshot(): Bitmap? = suspendCoroutine {
@@ -144,7 +153,7 @@ data class A11yEvent(
     val type: Int,
     val time: Long,
     val appId: String,
-    val className: String,
+    val name: String,
     val event: AccessibilityEvent,
 ) {
     val safeSource: AccessibilityNodeInfo?
@@ -152,7 +161,7 @@ data class A11yEvent(
 
     fun sameAs(other: A11yEvent): Boolean {
         if (other === this) return true
-        return type == other.type && appId == other.appId && className == other.className
+        return type == other.type && appId == other.appId && name == other.name
     }
 }
 
@@ -164,7 +173,7 @@ fun AccessibilityEvent.toA11yEvent(): A11yEvent? {
         type = eventType,
         time = System.currentTimeMillis(),
         appId = appId.toString(),
-        className = b.toString(),
+        name = b.toString(),
         event = this,
     )
 }

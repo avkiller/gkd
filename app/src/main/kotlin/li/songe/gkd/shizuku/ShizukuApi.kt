@@ -2,8 +2,7 @@ package li.songe.gkd.shizuku
 
 
 import android.content.ComponentName
-import android.content.pm.PackageManager
-import android.os.IInterface
+import androidx.annotation.WorkerThread
 import com.blankj.utilcode.util.LogUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,50 +13,23 @@ import kotlinx.coroutines.flow.stateIn
 import li.songe.gkd.app
 import li.songe.gkd.appScope
 import li.songe.gkd.isActivityVisible
-import li.songe.gkd.permission.shizukuOkState
+import li.songe.gkd.permission.shizukuGrantedState
+import li.songe.gkd.permission.updatePermissionState
 import li.songe.gkd.store.storeFlow
 import li.songe.gkd.util.MutexState
 import li.songe.gkd.util.launchTry
+import li.songe.gkd.util.runMainPost
 import li.songe.gkd.util.toast
 import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuBinderWrapper
 import rikka.shizuku.SystemServiceHelper
-import kotlin.reflect.KType
-import kotlin.reflect.full.declaredMemberFunctions
-import kotlin.reflect.full.valueParameters
-import kotlin.reflect.jvm.jvmName
 
-private val hiddenFunctionMap = HashMap<String, Int>()
-fun IInterface.findCompatMethod(
-    name: String,
-    typePairs: List<Pair<Int, List<KType>>>
-): Int {
-    val key = "${this::class.jvmName}::$name"
-    hiddenFunctionMap[key]?.let { return it }
-    val functions = this::class.declaredMemberFunctions.filter { it.name == name }
-    for (f in functions) {
-        val types = f.valueParameters.map { it.type }
-        typePairs.find { it.second == types }?.first?.let {
-            hiddenFunctionMap[key] = it
-            return it
-        }
-    }
-    LogUtils.d(
-        "获取签名 ${this::class.jvmName}::$name 失败",
-        functions.joinToString("\n") {
-            it.valueParameters.map { p -> p.type.toString() }.toString()
-        }
-    )
-    hiddenFunctionMap[key] = -1
-    return -1
-}
-
-// shizuku 会概率断开
 inline fun <T> safeInvokeMethod(
     block: () -> T
 ): T? = try {
     block()
-} catch (_: Throwable) {
+} catch (e: Throwable) {
+    e.printStackTrace()
     null
 }
 
@@ -67,95 +39,131 @@ fun getStubService(name: String, condition: Boolean): ShizukuBinderWrapper? {
     return ShizukuBinderWrapper(service)
 }
 
+class ShizukuContext(
+    val serviceWrapper: UserServiceWrapper?,
+    val packageManager: SafePackageManager?,
+    val userManager: SafeUserManager?,
+    val activityManager: SafeActivityManager?,
+    val activityTaskManager: SafeActivityTaskManager?,
+    val appOpsService: SafeAppOpsService?,
+    val inputManager: SafeInputManager?,
+) {
+    val ok get() = this !== defaultShizukuContext
+    fun destroy() {
+        serviceWrapper?.destroy()
+        if (activityTaskManager != null) {
+            activityTaskManager.unregisterDefault()
+        } else {
+            activityManager?.unregisterDefault()
+        }
+    }
+
+    val states = listOf(
+        "IUserService" to serviceWrapper,
+        "IActivityManager" to activityManager,
+        "IActivityTaskManager" to activityTaskManager,
+        "IAppOpsService" to appOpsService,
+        "IInputManager" to inputManager,
+        "IPackageManager" to packageManager,
+        "IUserManager" to userManager,
+    )
+
+    fun grantSelf() {
+        appOpsService?.allowAllSelfMode()
+        packageManager?.allowAllSelfPermission()
+    }
+
+    @WorkerThread
+    fun tap(x: Float, y: Float, duration: Long = 0): Boolean {
+        return serviceWrapper?.tap(x, y, duration) ?: (inputManager?.tap(x, y, duration) != null)
+    }
+
+    fun topCpn(): ComponentName? {
+        return (activityTaskManager?.getTasks(1)
+            ?: activityManager?.getTasks(1))?.firstOrNull()?.topActivity
+    }
+
+    init {
+        if (activityTaskManager != null) {
+            activityTaskManager.registerDefault()
+        } else {
+            activityManager?.registerDefault()
+        }
+        grantSelf()
+    }
+}
+
+private val defaultShizukuContext = ShizukuContext(
+    serviceWrapper = null,
+    packageManager = null,
+    userManager = null,
+    activityManager = null,
+    activityTaskManager = null,
+    appOpsService = null,
+    inputManager = null,
+)
+
+val currentUserId by lazy { android.os.Process.myUserHandle().hashCode() }
+
+val shizukuContextFlow = MutableStateFlow(defaultShizukuContext)
+
 private val shizukuUsedFlow by lazy {
     combine(
-        shizukuOkState.stateFlow,
+        shizukuGrantedState.stateFlow,
         storeFlow.map { it.enableShizuku },
     ) { a, b ->
         a && b
     }.stateIn(appScope, SharingStarted.Eagerly, false)
 }
 
-class ShizukuContext(
-    val serviceWrapper: UserServiceWrapper? = null,
-    val packageManager: SafePackageManager? = null,
-    val userManager: SafeUserManager? = null,
-    val activityManager: SafeActivityManager? = null,
-    val activityTaskManager: SafeActivityTaskManager? = null,
-) {
-    val ok get() = this !== defaultShizukuContext
-    fun destroy() {
-        serviceWrapper?.destroy()
-        activityTaskManager?.unregisterDefault()
-    }
-}
-
-private val defaultShizukuContext = ShizukuContext()
-
-val currentUserId by lazy { android.os.Process.myUserHandle().hashCode() }
-
-val shizukuContextFlow = MutableStateFlow(defaultShizukuContext)
-
-fun safeGetTopCpn(): ComponentName? = shizukuContextFlow.value.run {
-    activityTaskManager?.getTopCpn() ?: activityManager?.getTopCpn()
-}
-
-fun shizukuCheckGranted(): Boolean {
-    val granted = try {
-        Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
-    } catch (_: Throwable) {
-        false
-    }
-    if (!granted) return false
-    val u = shizukuContextFlow.value.activityManager ?: SafeActivityManager.newBinder()
-    return u?.getTopCpn() != null
-}
-
 val updateBinderMutex = MutexState()
-private fun updateShizukuBinder() = appScope.launchTry(Dispatchers.IO) {
-    updateBinderMutex.withStateLock {
-        if (shizukuUsedFlow.value) {
-            if (!app.justStarted && isActivityVisible()) {
-                toast("正在连接 Shizuku 服务...")
-            }
-            shizukuContextFlow.value = ShizukuContext(
-                serviceWrapper = buildServiceWrapper(),
-                packageManager = SafePackageManager.newBinder(),
-                userManager = SafeUserManager.newBinder(),
-                activityManager = SafeActivityManager.newBinder(),
-                activityTaskManager = SafeActivityTaskManager.newBinder()?.apply {
-                    registerDefault()
-                },
-            )
-            if (isActivityVisible()) {
-                val delayMillis = if (app.justStarted) 1200L else 0L
-                if (shizukuContextFlow.value.serviceWrapper == null) {
-                    toast("Shizuku 服务连接失败", delayMillis)
+private fun updateShizukuBinder() = updateBinderMutex.launchTry(appScope, Dispatchers.IO) {
+    if (shizukuUsedFlow.value) {
+        if (!app.justStarted && isActivityVisible()) {
+            toast("正在连接 Shizuku 服务...")
+        }
+        shizukuContextFlow.value = ShizukuContext(
+            serviceWrapper = buildServiceWrapper(),
+            packageManager = SafePackageManager.newBinder(),
+            userManager = SafeUserManager.newBinder(),
+            activityManager = SafeActivityManager.newBinder(),
+            activityTaskManager = SafeActivityTaskManager.newBinder(),
+            appOpsService = SafeAppOpsService.newBinder(),
+            inputManager = SafeInputManager.newBinder(),
+        )
+        updatePermissionState()
+        if (isActivityVisible()) {
+            val delayMillis = if (app.justStarted) 1200L else 0L
+            val newValue = shizukuContextFlow.value
+            if (newValue.serviceWrapper == null) {
+                if (newValue.packageManager != null) {
+                    runMainPost(delayMillis) { toast("Shizuku 服务连接部分失败") }
                 } else {
-                    toast("Shizuku 服务连接成功", delayMillis)
+                    runMainPost(delayMillis) { toast("Shizuku 服务连接失败") }
                 }
+            } else {
+                runMainPost(delayMillis) { toast("Shizuku 服务连接成功") }
             }
-        } else if (shizukuContextFlow.value.ok) {
-            shizukuContextFlow.value.destroy()
-            shizukuContextFlow.value = defaultShizukuContext
-            if (isActivityVisible()) {
-                toast("Shizuku 服务已断开")
-            }
+        }
+    } else if (shizukuContextFlow.value.ok) {
+        shizukuContextFlow.value.destroy()
+        shizukuContextFlow.value = defaultShizukuContext
+        if (isActivityVisible()) {
+            toast("Shizuku 服务已断开")
         }
     }
 }
-
 
 fun initShizuku() {
     Shizuku.addBinderReceivedListener {
         LogUtils.d("Shizuku.addBinderReceivedListener")
         appScope.launchTry(Dispatchers.IO) {
-            shizukuOkState.updateAndGet()
+            shizukuGrantedState.updateAndGet()
         }
     }
     Shizuku.addBinderDeadListener {
         LogUtils.d("Shizuku.addBinderDeadListener")
-        shizukuOkState.stateFlow.value = false
+        shizukuGrantedState.stateFlow.value = false
     }
     appScope.launchTry {
         shizukuUsedFlow.collect { updateShizukuBinder() }

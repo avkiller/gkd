@@ -4,6 +4,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import li.songe.gkd.appScope
+import li.songe.gkd.service.ExposeService
+import li.songe.gkd.ui.gkdStartCommandText
 import li.songe.gkd.util.AppListString
 import li.songe.gkd.util.launchTry
 import li.songe.gkd.util.toast
@@ -39,12 +41,31 @@ val blockA11yAppListFlow: MutableStateFlow<Set<String>> by lazy {
     )
 }
 
+val actualBlockA11yAppList: Set<String>
+    get() = if (storeFlow.value.blockA11yAppListFollowMatch) {
+        blockMatchAppListFlow.value
+    } else {
+        blockA11yAppListFlow.value
+    }
+
+fun checkAppBlockMatch(appId: String): Boolean {
+    if (blockMatchAppListFlow.value.contains(appId)) {
+        return true
+    }
+    if (storeFlow.value.enableBlockA11yAppList) {
+        return actualBlockA11yAppList.contains(appId)
+    }
+    return false
+}
+
 fun initStore() = appScope.launchTry(Dispatchers.IO) {
     // preload
     storeFlow.value
     actionCountFlow.value
     blockMatchAppListFlow.value
     blockA11yAppListFlow.value
+    gkdStartCommandText
+    ExposeService.initCommandFile()
 }
 
 fun switchStoreEnableMatch() {

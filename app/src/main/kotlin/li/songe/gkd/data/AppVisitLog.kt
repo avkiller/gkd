@@ -27,8 +27,13 @@ data class AppVisitLog(
 
         @Transaction
         suspend fun insert(oldAppId: String, newAppId: String, mtime: Long) {
-            insert(AppVisitLog(oldAppId, fixAppVisitTime(oldAppId, mtime - 1)))
-            insert(AppVisitLog(newAppId, fixAppVisitTime(newAppId, mtime)))
+            insert(
+                AppVisitLog(oldAppId, fixAppVisitTime(oldAppId, mtime - 1)),
+                AppVisitLog(newAppId, fixAppVisitTime(newAppId, mtime)),
+            )
+            if (appLogCount++ % 100 == 0) {
+                deleteKeepLatest()
+            }
         }
 
         @Query("SELECT DISTINCT id FROM app_visit_log ORDER BY mtime DESC")
@@ -40,12 +45,12 @@ data class AppVisitLog(
             WHERE (
                     SELECT COUNT(*)
                     FROM app_visit_log
-                ) > 1000
+                ) > 500
                 AND mtime <= (
                     SELECT mtime
                     FROM app_visit_log
                     ORDER BY mtime DESC
-                    LIMIT 1 OFFSET 1000
+                    LIMIT 1 OFFSET 500
                 )
         """
         )
@@ -57,3 +62,5 @@ private fun fixAppVisitTime(appId: String, t: Long): Long = when (appId) {
     META.appId, launcherAppId, systemUiAppId -> t - 60_000
     else -> t
 }
+
+private var appLogCount = 0

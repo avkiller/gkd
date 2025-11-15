@@ -38,6 +38,7 @@ interface OnSimpleLife {
         }
     }
 
+    val scope: CoroutineScope
     fun useScope(): CoroutineScope = MainScope().apply { onDestroyed { cancel() } }
 
     fun useAliveFlow(stateFlow: MutableStateFlow<Boolean>) {
@@ -48,7 +49,7 @@ interface OnSimpleLife {
     fun useAliveToast(name: String, onlyWhenVisible: Boolean = false, delayMillis: Long = 0L) {
         onCreated {
             if (isActivityVisible() || !onlyWhenVisible) {
-                toast("${name}已启动", delayMillis)
+                runMainPost(delayMillis) { toast("${name}已启动") }
             }
         }
         onDestroyed {

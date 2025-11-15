@@ -4,8 +4,6 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
-import android.os.Handler
-import android.os.Looper
 import android.webkit.URLUtil
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
@@ -17,8 +15,8 @@ import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestin
 import com.ramcosta.composedestinations.spec.Direction
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
@@ -26,12 +24,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import li.songe.gkd.a11y.useA11yServiceEnabledFlow
+import li.songe.gkd.a11y.useEnabledA11yServicesFlow
 import li.songe.gkd.data.RawSubscription
 import li.songe.gkd.data.SubsItem
 import li.songe.gkd.data.importData
 import li.songe.gkd.db.DbSet
 import li.songe.gkd.permission.AuthReason
-import li.songe.gkd.permission.shizukuOkState
+import li.songe.gkd.permission.canQueryPkgState
+import li.songe.gkd.permission.shizukuGrantedState
+import li.songe.gkd.service.A11yService
 import li.songe.gkd.shizuku.shizukuContextFlow
 import li.songe.gkd.shizuku.updateBinderMutex
 import li.songe.gkd.store.createTextFlow
@@ -52,6 +53,7 @@ import li.songe.gkd.util.client
 import li.songe.gkd.util.launchTry
 import li.songe.gkd.util.openUri
 import li.songe.gkd.util.openWeChatScaner
+import li.songe.gkd.util.runMainPost
 import li.songe.gkd.util.stopCoroutine
 import li.songe.gkd.util.subsFolder
 import li.songe.gkd.util.subsItemsFlow
@@ -71,8 +73,15 @@ class MainViewModel : BaseViewModel(), OnSimpleLife {
 
     init {
         _instance = this
-        addCloseable { _instance = null }
+        addCloseable {
+            if (_instance == this) { // 可能同时存在 2 个 MainViewModel 实例
+                _instance = null
+            }
+        }
     }
+
+    override val scope: CoroutineScope
+        get() = viewModelScope
 
     private lateinit var navController: NavHostController
     fun updateNavController(navController: NavHostController) {
@@ -84,12 +93,8 @@ class MainViewModel : BaseViewModel(), OnSimpleLife {
         if (!backThrottleTimer.expired()) return
         @SuppressLint("RestrictedApi")
         if (navController.currentBackStack.value.size == 1) return
-        if (Looper.getMainLooper() == Looper.myLooper()) {
+        runMainPost {
             navController.popBackStack()
-        } else {
-            Handler(Looper.getMainLooper()).post {
-                navController.popBackStack()
-            }
         }
     }
 
@@ -97,16 +102,12 @@ class MainViewModel : BaseViewModel(), OnSimpleLife {
         if (direction.route == navController.currentDestination?.route) {
             return
         }
-        if (Looper.getMainLooper() != Looper.myLooper()) {
-            Handler(Looper.getMainLooper()).post {
-                navigatePage(direction, builder)
+        runMainPost {
+            if (builder != null) {
+                navController.navigate(direction.route, builder)
+            } else {
+                navController.navigate(direction.route)
             }
-            return
-        }
-        if (builder != null) {
-            navController.navigate(direction.route, builder)
-        } else {
-            navController.navigate(direction.route)
         }
     }
 
@@ -281,36 +282,45 @@ class MainViewModel : BaseViewModel(), OnSimpleLife {
         )
     }
 
-
-    fun requestShizuku() = try {
-        Shizuku.requestPermission(Activity.RESULT_OK)
-    } catch (e: Throwable) {
-        shizukuErrorFlow.value = e
+    fun switchEnableShizuku(value: Boolean) {
+        if (updateBinderMutex.mutex.isLocked) {
+            toast("正在连接中，请稍后")
+            return
+        }
+        storeFlow.update { s -> s.copy(enableShizuku = value) }
     }
 
-    suspend fun grantPermissionByShizuku(command: String) {
+    fun requestShizuku() {
+        if (shizukuContextFlow.value.ok) return
         if (updateBinderMutex.mutex.isLocked) {
-            toast("正在连接 Shizuku 服务，请稍后")
-            stopCoroutine()
+            toast("正在连接中，请稍后")
+            return
         }
-        if (!shizukuOkState.stateFlow.value) {
+        try {
+            Shizuku.requestPermission(Activity.RESULT_OK)
+        } catch (e: Throwable) {
+            shizukuErrorFlow.value = e
+        }
+    }
+
+    suspend fun guardShizukuContext() {
+        if (shizukuContextFlow.value.ok) return
+        if (!storeFlow.value.enableShizuku) {
+            storeFlow.update { it.copy(enableShizuku = true) }
+        }
+        if (!shizukuGrantedState.updateAndGet()) {
             requestShizuku()
             stopCoroutine()
         }
-        if (!storeFlow.value.enableShizuku) {
-            storeFlow.update { it.copy(enableShizuku = true) }
-            delay(500)
-            while (updateBinderMutex.mutex.isLocked) {
-                delay(100)
-            }
-        }
-        val service = shizukuContextFlow.value.serviceWrapper ?: stopCoroutine()
-        if (!service.execCommandForResult(command).ok) {
-            stopCoroutine()
-        }
+        if (shizukuContextFlow.value.ok) return
+        stopCoroutine()
     }
 
-    val a11yServiceEnabledFlow = useA11yServiceEnabledFlow()
+    private val a11yServicesFlow = useEnabledA11yServicesFlow()
+    val a11yServiceEnabledFlow = useA11yServiceEnabledFlow(a11yServicesFlow)
+    val hasOtherA11yFlow = a11yServicesFlow.mapNew { list ->
+        list.any { it != A11yService.a11yCn }
+    }
 
     init {
         // preload
@@ -348,6 +358,10 @@ class MainViewModel : BaseViewModel(), OnSimpleLife {
         viewModelScope.launch(Dispatchers.IO) {
             // preload
             githubCookieFlow.value
+        }
+
+        canQueryPkgState.stateFlow.launchOnChange {
+            appListKeyFlow.update { it + 1 }
         }
 
         // for OnSimpleLife

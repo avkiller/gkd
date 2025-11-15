@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import li.songe.gkd.META
 import li.songe.gkd.app
 import li.songe.gkd.appScope
 import li.songe.gkd.data.ActionLog
@@ -20,15 +21,19 @@ import li.songe.gkd.data.AttrInfo
 import li.songe.gkd.data.ResetMatchType
 import li.songe.gkd.data.ResolvedRule
 import li.songe.gkd.data.RuleStatus
+import li.songe.gkd.data.isSystem
 import li.songe.gkd.db.DbSet
+import li.songe.gkd.service.updateTopAppId
+import li.songe.gkd.shizuku.safeInvokeMethod
 import li.songe.gkd.store.actionCountFlow
-import li.songe.gkd.store.blockA11yAppListFlow
-import li.songe.gkd.store.blockMatchAppListFlow
+import li.songe.gkd.store.checkAppBlockMatch
 import li.songe.gkd.store.storeFlow
+import li.songe.gkd.util.AndroidTarget
 import li.songe.gkd.util.PKG_FLAGS
 import li.songe.gkd.util.RuleSummary
 import li.songe.gkd.util.launchTry
 import li.songe.gkd.util.ruleSummaryFlow
+import li.songe.gkd.util.systemUiAppId
 
 data class TopActivity(
     val appId: String = "",
@@ -52,6 +57,10 @@ data class TopActivity(
     fun sameAs(a: String, b: String?): Boolean {
         return appId == a && activityId == b
     }
+
+    fun sameAs(cn: ComponentName): Boolean {
+        return appId == cn.packageName && activityId == cn.className
+    }
 }
 
 val topActivityFlow = MutableStateFlow(TopActivity())
@@ -62,10 +71,10 @@ private var lastValidActivity: TopActivity = topActivityFlow.value
         }
     }
 
-private val activityLogMutex = Mutex()
 private var activityLogCount = 0
 private var lastActivityUpdateTime = 0L
 private var lastActivityForceUpdateTime = 0L
+private val tempActivityLogList = mutableListOf<ActivityLog>()
 
 private object ActivityCache : LruCache<Pair<String, String>, Boolean>(256) {
     override fun create(key: Pair<String, String>): Boolean = try {
@@ -90,10 +99,7 @@ class ActivityRule(
     val topActivity: TopActivity = TopActivity(),
     val ruleSummary: RuleSummary = RuleSummary(),
 ) {
-    val blockMatch = (blockMatchAppListFlow.value.contains(topActivity.appId)
-            || storeFlow.value.enableBlockA11yAppList && blockA11yAppListFlow.value.contains(
-        topActivity.appId
-    ))
+    val blockMatch = checkAppBlockMatch(topActivity.appId)
     val appRules = ruleSummary.appIdToRules[topActivity.appId] ?: emptyList()
     val activityRules = if (blockMatch) emptyList() else appRules.filter { rule ->
         rule.matchActivity(topActivity.appId, topActivity.activityId)
@@ -126,25 +132,29 @@ class ActivityRule(
 
 val activityRuleFlow = MutableStateFlow(ActivityRule())
 
-val topAppIdFlow by lazy {
-    MutableStateFlow(launcherAppId)
-}
-
-private var appLogCount = 0
 private var lastAppId = ""
 
+sealed class ActivityScene() {
+    data object ScreenOn : ActivityScene()
+    data object A11y : ActivityScene()
+    data object TaskStack : ActivityScene()
+}
+
 @Synchronized
-fun updateTopActivity(appId: String, activityId: String?, type: Int = 0) {
+fun updateTopActivity(
+    appId: String,
+    activityId: String?,
+    scene: ActivityScene = ActivityScene.A11y,
+) {
     val t = System.currentTimeMillis()
-    if (type > 0 && storeFlow.value.enableBlockA11yAppList) {
-        topAppIdFlow.value = appId
+    if (scene == ActivityScene.TaskStack && storeFlow.value.enableBlockA11yAppList) {
+        updateTopAppId(appId)
     }
     val oldActivity = topActivityFlow.value
-    val forced = type > 0
-    val isSame = oldActivity.sameAs(appId, activityId)
-    if (forced) {
+    val isSame = scene != ActivityScene.ScreenOn && oldActivity.sameAs(appId, activityId)
+    if (scene == ActivityScene.TaskStack) {
         lastActivityForceUpdateTime = t
-    } else {
+    } else if (scene == ActivityScene.A11y) {
         if (lastActivityForceUpdateTime > 0) {
             // ITaskStackListener 的变速快于无障碍
             if (t - lastActivityForceUpdateTime < 1000) return
@@ -164,27 +174,28 @@ fun updateTopActivity(appId: String, activityId: String?, type: Int = 0) {
     )
     lastValidActivity = oldActivity
     lastActivityUpdateTime = t
-    if (storeFlow.value.enableActivityLog) {
-        appScope.launchTry(Dispatchers.IO) {
-            activityLogMutex.withLock {
-                DbSet.activityLogDao.insert(
-                    ActivityLog(
-                        appId = appId,
-                        activityId = activityId,
-                        ctime = t,
-                    )
-                )
-                activityLogCount++
-                if (activityLogCount % 100 == 0) {
-                    DbSet.activityLogDao.deleteKeepLatest()
-                }
-            }
+    tempActivityLogList.add(
+        ActivityLog(
+            appId = appId,
+            activityId = activityId,
+            ctime = t,
+        )
+    )
+    if (tempActivityLogList.size >= 16 || appId == META.appId) {
+        val logs = tempActivityLogList.toTypedArray()
+        tempActivityLogList.clear()
+        appScope.launchTry {
+            DbSet.activityLogDao.insert(*logs)
         }
+    }
+    if (activityLogCount++ % 100 == 0) {
+        appScope.launchTry { DbSet.activityLogDao.deleteKeepLatest() }
     }
     val topActivity = topActivityFlow.value
     val oldActivityRule = activityRuleFlow.value
     val ruleSummary = ruleSummaryFlow.value
-    val idChanged = topActivity.appId != oldActivityRule.topActivity.appId
+    val idChanged = (scene == ActivityScene.ScreenOn ||
+            topActivity.appId != oldActivityRule.topActivity.appId)
     val topChanged = idChanged || oldActivityRule.topActivity != topActivity
     val ruleChanged = oldActivityRule.ruleSummary !== ruleSummary
     if (topChanged || ruleChanged) {
@@ -193,15 +204,12 @@ fun updateTopActivity(appId: String, activityId: String?, type: Int = 0) {
             topActivity = topActivity,
         )
         if (idChanged) {
+            val oldAppId = lastAppId
             lastAppId = appId
-            appChangeTime = t
             appScope.launchTry {
-                DbSet.appVisitLogDao.insert(lastAppId, appId, t)
-                appLogCount++
-                if (appLogCount % 100 == 0) {
-                    DbSet.appVisitLogDao.deleteKeepLatest()
-                }
+                DbSet.appVisitLogDao.insert(oldAppId, appId, t)
             }
+            appChangeTime = t
             ruleSummary.globalRules.forEach { it.resetState(t) }
             ruleSummary.appIdToRules[oldActivityRule.topActivity.appId]?.forEach { it.resetState(t) }
             newActivityRule.appRules.forEach { it.resetState(t) }
@@ -225,9 +233,7 @@ fun updateTopActivity(appId: String, activityId: String?, type: Int = 0) {
             }
         }
         activityRuleFlow.value = newActivityRule
-        LogUtils.d(
-            "${oldActivity.format()} -> ${topActivityFlow.value.format()} (type=$type)",
-        )
+        LogUtils.d("${oldActivity.format()} -> ${topActivityFlow.value.format()} (scene=$scene)")
     }
 }
 
@@ -242,11 +248,32 @@ var appChangeTime = 0L
 
 var imeAppId = ""
 var launcherAppId = ""
+var systemRecentCn = ComponentName("", "")
 
 fun updateSystemDefaultAppId() {
-    launcherAppId = app.resolveAppId(Intent.ACTION_MAIN, Intent.CATEGORY_HOME) ?: ""
     imeAppId = app.getSecureString(Settings.Secure.DEFAULT_INPUT_METHOD)
         ?.let(ComponentName::unflattenFromString)?.packageName ?: ""
+    val launcherCn = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+        .resolveActivity(app.packageManager)
+    launcherAppId = launcherCn.packageName
+    if (app.getPkgInfo(launcherAppId)?.applicationInfo?.isSystem == true) {
+        systemRecentCn = launcherCn
+    } else {
+        safeInvokeMethod {
+            if (AndroidTarget.P) {
+                systemRecentCn = ComponentName.unflattenFromString(
+                    app.getString(com.android.internal.R.string.config_recentsComponentName)
+                ) ?: systemRecentCn
+            }
+        }
+        if (systemRecentCn.packageName.isEmpty()) {
+            // https://github.com/android-cs/8/blob/main/packages/SystemUI/src/com/android/systemui/recents/RecentsActivity.java
+            systemRecentCn = ComponentName(
+                systemUiAppId,
+                "$systemUiAppId.recents.RecentsActivity",
+            )
+        }
+    }
 }
 
 private val actionLogMutex = Mutex()

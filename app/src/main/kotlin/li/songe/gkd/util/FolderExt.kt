@@ -1,8 +1,17 @@
 package li.songe.gkd.util
 
 import android.text.format.DateUtils
+import androidx.annotation.WorkerThread
 import com.blankj.utilcode.util.LogUtils
+import kotlinx.serialization.Serializable
+import li.songe.gkd.META
 import li.songe.gkd.app
+import li.songe.gkd.data.AppInfo
+import li.songe.gkd.data.UserInfo
+import li.songe.gkd.data.otherUserMapFlow
+import li.songe.gkd.permission.allPermissionStates
+import li.songe.gkd.shizuku.currentUserId
+import li.songe.gkd.shizuku.shizukuContextFlow
 import java.io.File
 
 fun File.autoMk(): File {
@@ -18,6 +27,8 @@ private val filesDir: File by lazy {
 
 val dbFolder: File
     get() = filesDir.resolve("db").autoMk()
+val shFolder: File
+    get() = filesDir.resolve("sh").autoMk()
 val storeFolder: File
     get() = filesDir.resolve("store").autoMk()
 val subsFolder: File
@@ -59,12 +70,37 @@ fun clearCache() {
     removeExpired(tempDir)
 }
 
+@Serializable
+private data class AppJsonData(
+    val userId: Int = currentUserId,
+    val apps: List<AppInfo> = userAppInfoMapFlow.value.values.toList(),
+    val otherUsers: List<UserInfo> = otherUserMapFlow.value.values.toList(),
+    val othersApps: List<AppInfo> = otherUserAppInfoMapFlow.value.values.toList(),
+)
+
+@WorkerThread
 fun buildLogFile(): File {
     val tempDir = createTempDir()
     val files = mutableListOf(dbFolder, storeFolder, subsFolder)
     LogUtils.getLogFiles().firstOrNull()?.parentFile?.let { files.add(it) }
-    tempDir.resolve("appList.json").also {
-        it.writeText(json.encodeToString(appInfoMapFlow.value.values.toList()))
+    tempDir.resolve("apps.json").also {
+        it.writeText(json.encodeToString(AppJsonData()))
+        files.add(it)
+    }
+    tempDir.resolve("shizuku.txt").also {
+        it.writeText(shizukuContextFlow.value.states.joinToString("\n") { state ->
+            state.first + ": " + state.second.toString()
+        })
+        files.add(it)
+    }
+    tempDir.resolve("permission.txt").also {
+        it.writeText(allPermissionStates.joinToString("\n") { state ->
+            state.name + ": " + state.stateFlow.value.toString()
+        })
+        files.add(it)
+    }
+    tempDir.resolve("gkd-${META.versionCode}-v${META.versionName}.json").also {
+        it.writeText(json.encodeToString(META))
         files.add(it)
     }
     val logZipFile = sharedDir.resolve("log-${System.currentTimeMillis()}.zip")

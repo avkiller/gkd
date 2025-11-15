@@ -6,6 +6,8 @@ import android.content.Context.WINDOW_SERVICE
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.PixelFormat
+import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
@@ -15,13 +17,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import li.songe.gkd.META
 import li.songe.gkd.appScope
 import li.songe.gkd.isActivityVisible
-import li.songe.gkd.permission.shizukuOkState
+import li.songe.gkd.permission.shizukuGrantedState
 import li.songe.gkd.service.A11yService
 import li.songe.gkd.service.StatusService
-import li.songe.gkd.shizuku.safeGetTopCpn
+import li.songe.gkd.shizuku.shizukuContextFlow
 import li.songe.gkd.store.storeFlow
 import li.songe.gkd.util.ScreenUtils
 import li.songe.gkd.util.SnapshotExt
@@ -30,6 +31,14 @@ import li.songe.gkd.util.checkSubsUpdate
 import li.songe.gkd.util.launchTry
 import li.songe.gkd.util.mapState
 import li.songe.gkd.util.toast
+import li.songe.selector.MatchOption
+import li.songe.selector.QueryContext
+import li.songe.selector.Selector
+import li.songe.selector.Transform
+import li.songe.selector.getBooleanInvoke
+import li.songe.selector.getCharSequenceAttr
+import li.songe.selector.getCharSequenceInvoke
+import li.songe.selector.getIntInvoke
 
 
 context(service: A11yService)
@@ -41,7 +50,7 @@ fun onA11yFeatInit() = service.run {
     onA11yEvent { onA11yFeatEvent(it) }
     onCreated { StatusService.autoStart() }
     onDestroyed {
-        safeGetTopCpn()?.let {
+        shizukuContextFlow.value.topCpn()?.let {
             // com.android.systemui
             if (!topActivityFlow.value.sameAs(it.packageName, it.className)) {
                 updateTopActivity(it.packageName, it.className)
@@ -52,14 +61,14 @@ fun onA11yFeatInit() = service.run {
 
 private fun A11yService.useAttachState() {
     onCreated {
-        if (isActivityVisible() || META.debuggable) {
+        if (isActivityVisible()) {
             toast("无障碍已启动")
         }
     }
     onDestroyed {
-        if (isActivityVisible() || META.debuggable) {
+        if (isActivityVisible()) {
             if (willDestroyByBlock) {
-                toast("无障碍已局部关闭")
+                toast("无障碍局部关闭")
             } else {
                 toast("无障碍已停止")
             }
@@ -93,23 +102,79 @@ private fun watchCheckShizukuState() {
         if (t - lastCheckShizukuTime > 60 * 60_000L) {
             lastCheckShizukuTime = t
             appScope.launchTry(Dispatchers.IO) {
-                shizukuOkState.updateAndGet()
+                shizukuGrantedState.updateAndGet()
             }
         }
     }
 }
 
+private var tempEventSelector = "" to (null as Selector?)
+private fun AccessibilityEvent.getEventAttr(name: String): Any? = when (name) {
+    "name" -> className
+    "desc" -> contentDescription
+    "text" -> text
+    else -> null
+}
+
+private val a11yEventTransform by lazy {
+    Transform<AccessibilityEvent>(
+        getAttr = { target, name ->
+            when (target) {
+                is QueryContext<*> -> when (name) {
+                    "prev" -> target.prev
+                    "current" -> target.current
+                    else -> (target.current as AccessibilityEvent).getEventAttr(name)
+                }
+
+                is CharSequence -> getCharSequenceAttr(target, name)
+                is AccessibilityEvent -> target.getEventAttr(name)
+                is List<*> -> when (name) {
+                    "size" -> target.size
+                    else -> null
+                }
+
+                else -> null
+            }
+        },
+        getInvoke = { target, name, args ->
+            Log.d("A11yEventTransform", "getInvoke: $name(${args.joinToString()}) on $target")
+            when (target) {
+                is Int -> getIntInvoke(target, name, args)
+                is Boolean -> getBooleanInvoke(target, name, args)
+                is CharSequence -> getCharSequenceInvoke(target, name, args)
+                is List<*> -> when (name) {
+                    "get" -> {
+                        (args.singleOrNull() as? Int)?.let { index ->
+                            target.getOrNull(index)
+                        }
+                    }
+
+                    else -> null
+                }
+
+                else -> null
+            }
+        },
+        getName = { it.className },
+        getChildren = { emptySequence() },
+        getParent = { null }
+    )
+}
+
 context(event: AccessibilityEvent)
 private fun watchCaptureScreenshot() {
     if (!storeFlow.value.captureScreenshot) return
-    val appId = event.packageName.toString()
-    val appCls = event.className.toString()
-    if (!event.isFullScreen && appId == "com.miui.screenshot" && appCls == "android.widget.RelativeLayout" && event.text.firstOrNull()
-            ?.contentEquals("截屏缩略图") == true
-    ) {
-        appScope.launchTry {
-            SnapshotExt.captureSnapshot(skipScreenshot = true)
-        }
+    if (event.packageName != storeFlow.value.screenshotTargetAppId) return
+    if (tempEventSelector.first != storeFlow.value.screenshotEventSelector) {
+        tempEventSelector =
+            storeFlow.value.screenshotEventSelector to Selector.parseOrNull(storeFlow.value.screenshotEventSelector)
+    }
+    val selector = tempEventSelector.second ?: return
+    selector.match(event, a11yEventTransform, MatchOption(fastQuery = false)).let {
+        if (it == null) return
+    }
+    appScope.launchTry {
+        SnapshotExt.captureSnapshot(skipScreenshot = true)
     }
 }
 
@@ -145,6 +210,7 @@ private fun A11yService.useAliveOverlayView() {
             format = PixelFormat.TRANSLUCENT
             flags =
                 flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+            gravity = Gravity.START or Gravity.TOP
             width = 1
             height = 1
             packageName = context.packageName

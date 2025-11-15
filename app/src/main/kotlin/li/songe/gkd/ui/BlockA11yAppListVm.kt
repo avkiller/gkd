@@ -17,11 +17,9 @@ class BlockA11yAppListVm : BaseViewModel() {
     val sortTypeFlow = storeFlow.mapNew {
         AppSortOption.objects.findOption(it.a11yAppSort)
     }
-    val showSystemAppFlow = storeFlow.mapNew { s -> s.a11yShowSystemApp }
 
     val appFilter = useAppFilter(
         sortTypeFlow = sortTypeFlow,
-        showSystemAppFlow = showSystemAppFlow,
     )
     val searchStrFlow = appFilter.searchStrFlow
 
@@ -34,9 +32,9 @@ class BlockA11yAppListVm : BaseViewModel() {
     val textFlow = MutableStateFlow("")
     val textChanged get() = blockA11yAppListFlow.value != AppListString.decode(textFlow.value)
 
-    val indicatorTextFlow = textFlow.debounce(500).map {
-        AppListString.decode(it).size.toString()
-    }.stateInit("")
+    val indicatorSizeFlow = textFlow.debounce(500).map {
+        AppListString.decode(it).size
+    }.stateInit(0)
 
     init {
         showSearchBarFlow.launchCollect {

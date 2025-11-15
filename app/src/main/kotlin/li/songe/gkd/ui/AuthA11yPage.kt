@@ -1,5 +1,8 @@
 package li.songe.gkd.ui
 
+import android.Manifest
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,9 +10,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -19,19 +26,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
-import com.ramcosta.composedestinations.generated.destinations.WebViewPageDestination
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import li.songe.gkd.META
 import li.songe.gkd.permission.writeSecureSettingsState
 import li.songe.gkd.service.A11yService
 import li.songe.gkd.service.fixRestartService
+import li.songe.gkd.shizuku.shizukuContextFlow
 import li.songe.gkd.store.storeFlow
 import li.songe.gkd.ui.component.AuthButtonGroup
 import li.songe.gkd.ui.component.ManualAuthDialog
@@ -49,7 +59,7 @@ import li.songe.gkd.util.AndroidTarget
 import li.songe.gkd.util.ShortUrlSet
 import li.songe.gkd.util.launchAsFn
 import li.songe.gkd.util.openA11ySettings
-import li.songe.gkd.util.runCommandByRoot
+import li.songe.gkd.util.shFolder
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
 
@@ -66,9 +76,12 @@ fun AuthA11yPage() {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
         PerfTopAppBar(scrollBehavior = scrollBehavior, navigationIcon = {
-            PerfIconButton(imageVector = PerfIcon.ArrowBack, onClick = {
-                mainVm.popBackStack()
-            })
+            PerfIconButton(
+                imageVector = PerfIcon.ArrowBack,
+                onClickLabel = "返回上级页面",
+                onClick = {
+                    mainVm.popBackStack()
+                })
         }, title = {
             Text(text = "授权状态")
         })
@@ -94,18 +107,21 @@ fun AuthA11yPage() {
                 Text(
                     modifier = Modifier.padding(cardHorizontalPadding, 8.dp),
                     text = "普通授权(简单)",
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.titleMedium,
                 )
-                Text(
+                TextListItem(
                     modifier = Modifier.padding(cardHorizontalPadding, 0.dp),
                     style = MaterialTheme.typography.bodyMedium,
-                    text = "1. 授予「无障碍权限」\n2. 无障碍关闭后需重新授权"
+                    list = listOf(
+                        "授予「无障碍权限」",
+                        "无障碍关闭后需重新授权"
+                    ),
                 )
                 if (writeSecureSettings || a11yRunning) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         modifier = Modifier.padding(cardHorizontalPadding, 0.dp),
-                        text = "已持有「无障碍权限」, 可继续使用",
+                        text = "已持有「无障碍权限」，可继续使用",
                         style = MaterialTheme.typography.bodySmall,
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -126,7 +142,7 @@ fun AuthA11yPage() {
                         modifier = Modifier
                             .padding(cardHorizontalPadding, 0.dp)
                             .clickable {
-                                mainVm.navigatePage(WebViewPageDestination(initUrl = (ShortUrlSet.URL2)))
+                                mainVm.navigateWebPage(ShortUrlSet.URL2)
                             },
                         text = "无法开启无障碍?",
                         style = MaterialTheme.typography.bodySmall,
@@ -146,12 +162,17 @@ fun AuthA11yPage() {
                 Text(
                     modifier = Modifier.padding(cardHorizontalPadding, 8.dp),
                     text = "高级授权(推荐)",
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.titleMedium,
                 )
-                Text(
+                TextListItem(
                     modifier = Modifier.padding(cardHorizontalPadding, 0.dp),
                     style = MaterialTheme.typography.bodyMedium,
-                    text = "1. 授予「写入安全设置权限」\n2. 授权永久有效, 包含「无障碍权限」\n3. 应用可自行控制开关无障碍\n4. 在通知栏快捷开关可快捷重启, 无感保活"
+                    list = listOf(
+                        "授予「写入安全设置权限」",
+                        "授权永久有效，包含「无障碍权限」",
+                        "应用可自行控制开关无障碍",
+                        "在通知栏快捷开关可快捷重启，无感保活"
+                    ),
                 )
                 if (!writeSecureSettings) {
                     A11yAuthButtonGroup()
@@ -185,8 +206,8 @@ fun AuthA11yPage() {
                 }
                 Spacer(modifier = Modifier.height(4.dp))
             }
-            if (writeSecureSettings) {
-                Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+            AnimatedVisibility(writeSecureSettings && !shizukuContextFlow.collectAsState().value.ok) {
                 Card(
                     modifier = Modifier
                         .padding(itemHorizontalPadding, 0.dp)
@@ -197,12 +218,16 @@ fun AuthA11yPage() {
                     Text(
                         modifier = Modifier.padding(cardHorizontalPadding, 8.dp),
                         text = "解除可能受到的无障碍限制",
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.titleMedium,
                     )
-                    Text(
+                    TextListItem(
+                        list = listOf(
+                            "某些系统有更严格的无障碍限制",
+                            "在 GKD 更新后会限制其开关无障碍",
+                            "重新授权可解决此问题",
+                        ),
                         modifier = Modifier.padding(cardHorizontalPadding, 0.dp),
                         style = MaterialTheme.typography.bodyMedium,
-                        text = "1. 某些系统有更严格的无障碍限制\n2. 在 GKD 更新后会限制其开关无障碍\n3. 重新授权可解决此问题"
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
@@ -211,16 +236,6 @@ fun AuthA11yPage() {
                         style = MaterialTheme.typography.bodySmall,
                     )
                     A11yAuthButtonGroup()
-                    Text(
-                        modifier = Modifier
-                            .padding(cardHorizontalPadding, 0.dp)
-                            .clickable(onClick = throttle {
-                                mainVm.navigatePage(WebViewPageDestination(initUrl = ShortUrlSet.URL2))
-                            }),
-                        text = "其他方式解除限制",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
             }
@@ -229,7 +244,7 @@ fun AuthA11yPage() {
     }
 
     ManualAuthDialog(
-        commandText = a11yCommandText,
+        commandText = gkdStartCommandText,
         show = showCopyDlg,
         onUpdateShow = {
             vm.showCopyDlgFlow.value = it
@@ -237,23 +252,20 @@ fun AuthA11yPage() {
     )
 }
 
-private val a11yCommandText by lazy {
-    listOfNotNull(
-        "pm grant ${META.appId} android.permission.WRITE_SECURE_SETTINGS",
-        if (AndroidTarget.TIRAMISU) {
-            "appops set ${META.appId} ACCESS_RESTRICTED_SETTINGS allow"
-        } else {
-            null
-        },
-    ).joinToString("; ")
-}
+private val String.appopsAllow get() = "appops set ${META.appId} $this allow"
+private val String.pmGrant get() = "pm grant ${META.appId} $this"
 
-private fun successAuthExec() {
-    if (writeSecureSettingsState.updateAndGet()) {
-        toast("授权成功")
-        storeFlow.update { it.copy(enableService = true) }
-        fixRestartService()
-    }
+val gkdStartCommandText by lazy {
+    val commandText = listOfNotNull(
+        "set -euo pipefail",
+        Manifest.permission.WRITE_SECURE_SETTINGS.pmGrant,
+        if (AndroidTarget.TIRAMISU) "ACCESS_RESTRICTED_SETTINGS".appopsAllow else null,
+        if (AndroidTarget.UPSIDE_DOWN_CAKE) "FOREGROUND_SERVICE_SPECIAL_USE".appopsAllow else null,
+        "echo 'Execution Successful'",
+    ).joinToString("\n")
+    val file = shFolder.resolve("start.sh")
+    file.writeText(commandText)
+    "adb shell sh ${file.absolutePath}"
 }
 
 @Composable
@@ -261,16 +273,47 @@ private fun A11yAuthButtonGroup() {
     val mainVm = LocalMainViewModel.current
     val vm = viewModel<AuthA11yVm>()
     AuthButtonGroup(
-        onClickShizuku = vm.viewModelScope.launchAsFn(Dispatchers.IO) {
-            mainVm.grantPermissionByShizuku(a11yCommandText)
-            successAuthExec()
-        },
-        onClickManual = {
-            vm.showCopyDlgFlow.value = true
-        },
-        onClickRoot = vm.viewModelScope.launchAsFn(Dispatchers.IO) {
-            runCommandByRoot(a11yCommandText)
-            toast("授权成功")
-        }
+        buttons = listOf(
+            "手动解除" to {
+                mainVm.navigateWebPage(ShortUrlSet.URL2)
+            },
+            "Shizuku 授权" to vm.viewModelScope.launchAsFn(Dispatchers.IO) {
+                mainVm.guardShizukuContext()
+                if (writeSecureSettingsState.value) {
+                    toast("授权成功")
+                    storeFlow.update { it.copy(enableService = true) }
+                    fixRestartService()
+                }
+            },
+            "外部授权" to {
+                vm.showCopyDlgFlow.value = true
+            },
+        )
     )
+}
+
+@Composable
+private fun TextListItem(
+    list: List<String>,
+    modifier: Modifier = Modifier,
+    style: TextStyle = LocalTextStyle.current,
+) {
+    val lineHeightDp = LocalDensity.current.run { style.lineHeight.toDp() }
+    Column(
+        modifier = modifier,
+    ) {
+        list.forEach { text ->
+            Row {
+                Spacer(
+                    modifier = Modifier
+                        .padding(vertical = (lineHeightDp - 4.dp) / 2)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.tertiary)
+                        .size(4.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = text, style = style)
+            }
+        }
+    }
 }

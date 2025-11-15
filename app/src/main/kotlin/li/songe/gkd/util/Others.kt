@@ -9,6 +9,8 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
+import android.os.Handler
+import android.os.Looper
 import android.provider.AlarmClock
 import android.provider.MediaStore
 import android.provider.Settings
@@ -22,13 +24,13 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.get
-import com.blankj.utilcode.util.LogUtils
+import kotlinx.serialization.json.JsonElement
 import li.songe.gkd.META
 import li.songe.gkd.MainActivity
 import li.songe.gkd.app
+import li.songe.json5.Json5
 import li.songe.json5.Json5EncoderConfig
 import li.songe.json5.encodeToJson5String
-import java.io.DataOutputStream
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.jvmName
 
@@ -89,29 +91,11 @@ fun <S : Comparable<S>> AnimatedContentTransitionScope<S>.getUpDownTransform(): 
     )
 }
 
-suspend fun runCommandByRoot(commandText: String) {
-    var p: Process? = null
-    try {
-        p = Runtime.getRuntime().exec("su")
-        val o = DataOutputStream(p.outputStream)
-        o.writeBytes("${commandText}\nexit\n")
-        o.flush()
-        o.close()
-        p.waitFor()
-        if (p.exitValue() == 0) {
-            return
-        }
-    } catch (e: Exception) {
-        toast("运行失败:${e.message}")
-        LogUtils.d(e)
-    } finally {
-        p?.destroy()
-    }
-    stopCoroutine()
-}
-
 val defaultJson5Config = Json5EncoderConfig(indent = "\u0020\u0020", trailingComma = true)
 inline fun <reified T> toJson5String(value: T): String {
+    if (value is JsonElement) {
+        return Json5.encodeToString(value, defaultJson5Config)
+    }
     return json.encodeToJson5String(value, defaultJson5Config)
 }
 
@@ -164,6 +148,10 @@ private fun Char.isAsciiVar(): Boolean {
     return this.isAsciiLetter() || this in '0'..'9' || this == '_'
 }
 
+private fun Char.isAsciiClassVar(): Boolean {
+    return this.isAsciiVar() || this == '$'
+}
+
 // https://developer.android.com/build/configure-app-module?hl=zh-cn
 fun String.isValidAppId(): Boolean {
     if (!contains('.')) return false
@@ -177,6 +165,24 @@ fun String.isValidAppId(): Boolean {
                 return false
             }
         } else if (!c.isAsciiVar()) {
+            return false
+        }
+        i++
+    }
+    return true
+}
+
+fun String.isValidActivityId(): Boolean {
+    if (isEmpty()) return false
+    var i = 0
+    while (i < length) {
+        val c = get(i)
+        if (c == '.') {
+            i++
+            if (getOrNull(i)?.isAsciiClassVar() == false) {
+                return false
+            }
+        } else if (!c.isAsciiClassVar()) {
             return false
         }
         i++
@@ -222,4 +228,12 @@ object AppListString {
         }
         return set
     }
+}
+
+fun runMainPost(delayMillis: Long = 0L, r: Runnable) {
+    if (delayMillis == 0L && Looper.getMainLooper() == Looper.myLooper()) {
+        r.run()
+        return
+    }
+    Handler(Looper.getMainLooper()).postDelayed(r, delayMillis)
 }

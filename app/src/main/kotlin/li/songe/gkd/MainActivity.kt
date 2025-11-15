@@ -34,10 +34,13 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
@@ -45,6 +48,7 @@ import androidx.core.view.WindowInsetsAnimationCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
+import com.blankj.utilcode.util.LogUtils
 import com.dylanc.activityresult.launcher.PickContentLauncher
 import com.dylanc.activityresult.launcher.StartActivityLauncher
 import com.ramcosta.composedestinations.DestinationsNavHost
@@ -61,7 +65,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import li.songe.gkd.a11y.topActivityFlow
-import li.songe.gkd.a11y.topAppIdFlow
 import li.songe.gkd.a11y.updateSystemDefaultAppId
 import li.songe.gkd.a11y.updateTopActivity
 import li.songe.gkd.permission.AuthDialog
@@ -72,6 +75,8 @@ import li.songe.gkd.service.HttpService
 import li.songe.gkd.service.ScreenshotService
 import li.songe.gkd.service.StatusService
 import li.songe.gkd.service.fixRestartService
+import li.songe.gkd.service.updateTopAppId
+import li.songe.gkd.shizuku.shizukuContextFlow
 import li.songe.gkd.store.storeFlow
 import li.songe.gkd.ui.component.BuildDialog
 import li.songe.gkd.ui.component.PerfIcon
@@ -84,6 +89,7 @@ import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.share.LocalNavController
 import li.songe.gkd.ui.style.AppTheme
 import li.songe.gkd.util.AndroidTarget
+import li.songe.gkd.util.BarUtils
 import li.songe.gkd.util.EditGithubCookieDlg
 import li.songe.gkd.util.KeyboardUtils
 import li.songe.gkd.util.ShortUrlSet
@@ -115,8 +121,7 @@ class MainActivity : ComponentActivity() {
         get() = ViewCompat.getRootWindowInsets(window.decorView)!!
             .isVisible(WindowInsetsCompat.Type.ime())
 
-    private var _topBarWindowInsets: WindowInsets? = null
-    val topBarWindowInsets get() = _topBarWindowInsets!!
+    var topBarWindowInsets by mutableStateOf(WindowInsets(top = BarUtils.getStatusBarHeight()))
 
     private fun watchKeyboardVisible() {
         if (AndroidTarget.R) {
@@ -174,6 +179,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         fixSomeProblems()
         super.onCreate(savedInstanceState)
+        LogUtils.d("MainActivity::onCreate")
         mainVm
         launcher
         pickContentLauncher
@@ -190,10 +196,14 @@ class MainActivity : ComponentActivity() {
         }
         watchKeyboardVisible()
         StatusService.autoStart()
-        topAppIdFlow.value = META.appId
+        if (storeFlow.value.enableBlockA11yAppList) {
+            updateTopAppId(META.appId)
+        }
         setContent {
-            if (_topBarWindowInsets == null) {
-                _topBarWindowInsets = FixedWindowInsets(TopAppBarDefaults.windowInsets)
+            val latestInsets = TopAppBarDefaults.windowInsets
+            val density = LocalDensity.current
+            if (latestInsets.getTop(density) > topBarWindowInsets.getTop(density)) {
+                topBarWindowInsets = FixedWindowInsets(latestInsets)
             }
             val navController = rememberNavController()
             mainVm.updateNavController(navController)
@@ -235,6 +245,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        LogUtils.d("MainActivity::onStart")
         activityVisibleState++
         if (topActivityFlow.value.appId != META.appId) {
             updateTopActivity(META.appId, MainActivity::class.jvmName)
@@ -244,6 +255,7 @@ class MainActivity : ComponentActivity() {
     var isFirstResume = true
     override fun onResume() {
         super.onResume()
+        LogUtils.d("MainActivity::onResume")
         if (isFirstResume && startTime - app.startTime < 2000) {
             isFirstResume = false
         } else {
@@ -253,7 +265,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
+        LogUtils.d("MainActivity::onStop")
         activityVisibleState--
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        LogUtils.d("MainActivity::onDestroy")
     }
 
     private var lastBackPressedTime = 0L
@@ -309,9 +327,13 @@ private fun updateServiceRunning() {
 private val syncStateMutex = Mutex()
 fun syncFixState() {
     appScope.launchTry(Dispatchers.IO) {
+        if (syncStateMutex.isLocked) {
+            LogUtils.d("syncFixState isLocked")
+        }
         syncStateMutex.withLock {
             updateSystemDefaultAppId()
             updateServiceRunning()
+            shizukuContextFlow.value.grantSelf()
             updatePermissionState()
             fixRestartService()
         }
@@ -332,9 +354,9 @@ private fun ShizukuErrorDialog(stateFlow: MutableStateFlow<Throwable?>) {
                 Column {
                     Text(
                         text = if (installed) {
-                            "Shizuku 授权失败, 请检查是否运行"
+                            "Shizuku 授权失败，请检查是否运行"
                         } else {
-                            "Shizuku 授权失败, 检测到 Shizuku 未安装, 请先下载后安装, 如果你是通过其它方式授权, 请忽略此提示自行查找原因"
+                            "Shizuku 授权失败，检测到 Shizuku 未安装，请先下载后安装，如果你是通过其它方式授权，请忽略此提示自行查找原因"
                         }
                     )
                     Spacer(modifier = Modifier.height(8.dp))

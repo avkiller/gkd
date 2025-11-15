@@ -7,16 +7,16 @@ import android.os.IBinder
 import android.util.Log
 import androidx.annotation.Keep
 import com.blankj.utilcode.util.LogUtils
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import li.songe.gkd.META
-import li.songe.gkd.permission.shizukuOkState
+import li.songe.gkd.permission.shizukuGrantedState
 import li.songe.gkd.util.componentName
 import li.songe.gkd.util.json
 import rikka.shizuku.Shizuku
 import java.io.DataOutputStream
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlin.system.exitProcess
 
 
@@ -86,9 +86,13 @@ class UserService : IUserService.Stub {
     }
 }
 
-private fun unbindUserService(serviceArgs: Shizuku.UserServiceArgs, connection: ServiceConnection) {
-    if (!shizukuOkState.stateFlow.value) return
-    LogUtils.d("unbindUserService", serviceArgs)
+private fun unbindUserService(
+    serviceArgs: Shizuku.UserServiceArgs,
+    connection: ServiceConnection,
+    reason: String? = null,
+) {
+    if (!shizukuGrantedState.stateFlow.value) return
+    LogUtils.d("unbindUserService", serviceArgs, reason)
     // https://github.com/RikkaApps/Shizuku-API/blob/master/server-shared/src/main/java/rikka/shizuku/server/UserServiceManager.java#L62
     try {
         Shizuku.unbindUserService(serviceArgs, connection, false)
@@ -124,8 +128,8 @@ data class UserServiceWrapper(
         CommandResult(code = null, result = "", error = e.message)
     }
 
-    fun safeTap(x: Float, y: Float, duration: Long? = null): Boolean? {
-        val command = if (duration != null) {
+    fun tap(x: Float, y: Float, duration: Long = 0): Boolean {
+        val command = if (duration > 0) {
             "input swipe $x $y $x $y $duration"
         } else {
             "input tap $x $y"
@@ -167,7 +171,7 @@ suspend fun buildServiceWrapper(): UserServiceWrapper? {
         }
     }
     return withTimeoutOrNull(3000) {
-        suspendCoroutine { continuation ->
+        suspendCancellableCoroutine { continuation ->
             resumeCallback = { continuation.resume(it) }
             try {
                 Shizuku.bindUserService(serviceArgs, connection)
@@ -178,7 +182,7 @@ suspend fun buildServiceWrapper(): UserServiceWrapper? {
         }
     }.apply {
         if (this == null) {
-            unbindUserService(serviceArgs, connection)
+            unbindUserService(serviceArgs, connection, "connect timeout")
         }
     }
 }

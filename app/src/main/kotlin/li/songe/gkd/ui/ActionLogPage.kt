@@ -2,6 +2,7 @@ package li.songe.gkd.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -10,8 +11,10 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
@@ -28,9 +31,12 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -42,6 +48,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
+import com.ramcosta.composedestinations.generated.destinations.AppConfigPageDestination
 import com.ramcosta.composedestinations.generated.destinations.SubsAppGroupListPageDestination
 import com.ramcosta.composedestinations.generated.destinations.SubsGlobalGroupListPageDestination
 import kotlinx.coroutines.flow.SharingStarted
@@ -70,6 +77,7 @@ import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.share.noRippleClickable
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.ProfileTransitions
+import li.songe.gkd.ui.style.iconTextSize
 import li.songe.gkd.ui.style.itemHorizontalPadding
 import li.songe.gkd.ui.style.scaffoldPadding
 import li.songe.gkd.util.launchAsFn
@@ -174,7 +182,7 @@ fun ActionLogPage(
                     val item = list[i] ?: return@items
                     val lastItem = if (i > 0) list[i - 1] else null
                     ActionLogCard(
-                        modifier = Modifier.animateListItem(this),
+                        modifier = Modifier.animateListItem(),
                         i = i,
                         item = item,
                         lastItem = lastItem,
@@ -188,7 +196,7 @@ fun ActionLogPage(
                 item(ListPlaceholder.KEY, ListPlaceholder.TYPE) {
                     Spacer(modifier = Modifier.height(EmptyHeight))
                     if (list.itemCount == 0 && list.loadState.refresh !is LoadState.Loading) {
-                        EmptyText(text = "暂无记录")
+                        EmptyText(text = "暂无数据")
                     }
                 }
             }
@@ -228,19 +236,51 @@ private fun ActionLogCard(
         modifier = modifier
             .fillMaxWidth()
             .padding(
-                start = itemHorizontalPadding,
-                end = itemHorizontalPadding,
+                start = itemHorizontalPadding / 2,
+                end = itemHorizontalPadding / 2,
                 top = verticalPadding
             )
     ) {
         if (isDiffApp && appId == null) {
-            AppNameText(appId = actionLog.appId)
+            Row(
+                modifier = Modifier
+                    .padding(start = itemHorizontalPadding / 4)
+                    .clip(MaterialTheme.shapes.extraSmall)
+                    .clickable(onClick = throttle {
+                        mainVm.navigatePage(
+                            AppConfigPageDestination(
+                                appId = actionLog.appId,
+                            )
+                        )
+                    })
+                    .fillMaxWidth()
+                    .padding(start = 5.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.primary) {
+                    Spacer(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.secondary)
+                            .size(4.dp)
+                    )
+                    AppNameText(appId = actionLog.appId, modifier = Modifier.weight(1f))
+                    PerfIcon(
+                        imageVector = PerfIcon.KeyboardArrowRight,
+                        modifier = Modifier
+                            .iconTextSize()
+                    )
+                }
+            }
         }
         Row(
             modifier = Modifier
+                .padding(start = itemHorizontalPadding / 4)
                 .clickable(onClick = onClick)
                 .fillMaxWidth()
                 .height(IntrinsicSize.Min)
+                .padding(start = itemHorizontalPadding / 4)
         ) {
             if (appId == null) {
                 Spacer(modifier = Modifier.width(2.dp))
@@ -265,7 +305,6 @@ private fun ActionLogCard(
                     if (showActivityId != null) {
                         Text(
                             text = showActivityId,
-                            modifier = Modifier.height(LocalTextStyle.current.lineHeight.value.dp),
                             softWrap = false,
                             maxLines = 1,
                             overflow = TextOverflow.MiddleEllipsis,
@@ -277,8 +316,7 @@ private fun ActionLogCard(
                         )
                     }
                     if (subsId == null) {
-                        Text(
-                            text = subscription?.name ?: "id=${actionLog.subsId}",
+                        Row(
                             modifier = Modifier.clickable(onClick = throttle {
                                 if (subsItemsFlow.value.any { it.id == actionLog.subsId }) {
                                     mainVm.sheetSubsIdFlow.value = actionLog.subsId
@@ -286,7 +324,28 @@ private fun ActionLogCard(
                                     toast("订阅不存在")
                                 }
                             })
-                        )
+                        ) {
+                            Text(text = subscription?.name ?: "id=${actionLog.subsId}")
+                            val lineHeightDp = LocalDensity.current.run {
+                                LocalTextStyle.current.lineHeight.toDp()
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .height(lineHeightDp)
+                                    .padding(start = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "v${item.first.subsVersion}",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.tertiary,
+                                    modifier = Modifier
+                                        .clip(MaterialTheme.shapes.extraSmall)
+                                        .background(MaterialTheme.colorScheme.tertiaryContainer)
+                                        .padding(horizontal = 2.dp),
+                                )
+                            }
+                        }
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth()

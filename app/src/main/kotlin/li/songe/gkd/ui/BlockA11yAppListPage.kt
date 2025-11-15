@@ -2,17 +2,18 @@ package li.songe.gkd.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.IconButton
@@ -20,7 +21,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,6 +31,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
@@ -40,10 +45,12 @@ import com.ramcosta.composedestinations.annotation.RootGraph
 import kotlinx.coroutines.flow.update
 import li.songe.gkd.MainActivity
 import li.songe.gkd.data.AppInfo
+import li.songe.gkd.service.fixRestartService
 import li.songe.gkd.store.blockA11yAppListFlow
 import li.songe.gkd.store.storeFlow
 import li.songe.gkd.ui.component.AnimatedBooleanContent
 import li.songe.gkd.ui.component.AnimatedIcon
+import li.songe.gkd.ui.component.AnimationFloatingActionButton
 import li.songe.gkd.ui.component.AppBarTextField
 import li.songe.gkd.ui.component.AppIcon
 import li.songe.gkd.ui.component.AppNameText
@@ -53,13 +60,15 @@ import li.songe.gkd.ui.component.PerfCheckbox
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
 import li.songe.gkd.ui.component.PerfTopAppBar
-import li.songe.gkd.ui.component.QueryPkgAuthCard
 import li.songe.gkd.ui.component.autoFocus
+import li.songe.gkd.ui.component.isFullVisible
 import li.songe.gkd.ui.component.useListScrollState
 import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.icon.BackCloseIcon
+import li.songe.gkd.ui.icon.LockOpenRight
 import li.songe.gkd.ui.share.ListPlaceholder
 import li.songe.gkd.ui.share.LocalMainViewModel
+import li.songe.gkd.ui.share.asMutableState
 import li.songe.gkd.ui.share.noRippleClickable
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.ProfileTransitions
@@ -78,16 +87,16 @@ import li.songe.gkd.util.toast
 @Destination<RootGraph>(style = ProfileTransitions::class)
 @Composable
 fun BlockA11yAppListPage() {
+    val store by storeFlow.collectAsState()
     val mainVm = LocalMainViewModel.current
     val context = LocalActivity.current as MainActivity
     val vm = viewModel<BlockA11yAppListVm>()
-    val showSystemApp by vm.showSystemAppFlow.collectAsState()
     val sortType by vm.sortTypeFlow.collectAsState()
     val appInfos by vm.appInfosFlow.collectAsState()
     val searchStr by vm.searchStrFlow.collectAsState()
-    val showSearchBar by vm.showSearchBarFlow.collectAsState()
-    val (scrollBehavior, listState) = useListScrollState(vm.resetKey)
-    val editable by vm.editableFlow.collectAsState()
+    var showSearchBar by vm.showSearchBarFlow.asMutableState()
+    var editable by vm.editableFlow.asMutableState()
+    val (scrollBehavior, listState) = useListScrollState(vm.resetKey, canScroll = { !editable })
     BackHandler(editable, vm.viewModelScope.launchAsFn {
         context.justHideSoftInput()
         if (vm.textChanged) {
@@ -96,26 +105,18 @@ fun BlockA11yAppListPage() {
                 text = "当前内容未保存，是否放弃编辑？",
             )
         }
-        vm.editableFlow.value = false
+        editable = false
     })
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             PerfTopAppBar(
-                scrollBehavior = if (editable) {
-                    remember(scrollBehavior) {
-                        object : TopAppBarScrollBehavior by scrollBehavior {
-                            override val isPinned: Boolean
-                                get() = true
-                        }
-                    }
-                } else {
-                    scrollBehavior
-                },
+                scrollBehavior = scrollBehavior,
+                canScroll = !editable && !store.blockA11yAppListFollowMatch,
                 navigationIcon = {
                     IconButton(
                         onClick = throttle(vm.viewModelScope.launchAsFn {
-                            if (vm.editableFlow.value) {
+                            if (editable) {
                                 if (vm.textChanged) {
                                     context.justHideSoftInput()
                                     mainVm.dialogFlow.waitResult(
@@ -123,7 +124,7 @@ fun BlockA11yAppListPage() {
                                         text = "当前内容未保存，是否放弃编辑？",
                                     )
                                 }
-                                vm.editableFlow.update { !it }
+                                editable = !editable
                             } else {
                                 context.hideSoftInput()
                                 mainVm.popBackStack()
@@ -138,7 +139,7 @@ fun BlockA11yAppListPage() {
                     if (showSearchBar) {
                         BackHandler {
                             if (!context.justHideSoftInput()) {
-                                vm.showSearchBarFlow.value = false
+                                showSearchBar = false
                             }
                         }
                         AppBarTextField(
@@ -178,44 +179,47 @@ fun BlockA11yAppListPage() {
                                         toast("未修改")
                                     }
                                     context.justHideSoftInput()
-                                    vm.editableFlow.value = false
+                                    editable = false
                                 },
                             )
                         },
                         contentFalse = {
                             Row {
                                 PerfIconButton(
-                                    imageVector = PerfIcon.Edit,
-                                    onClick = vm.viewModelScope.launchAsFn {
-                                        if (vm.editableFlow.value && vm.textChanged) {
-                                            context.justHideSoftInput()
-                                            mainVm.dialogFlow.waitResult(
-                                                title = "提示",
-                                                text = "当前内容未保存，是否放弃编辑？",
+                                    imageVector = if (store.blockA11yAppListFollowMatch) PerfIcon.Lock else LockOpenRight,
+                                    contentDescription = if (store.blockA11yAppListFollowMatch) "已设置为跟随应用白名单" else "已设置为独立无障碍白名单",
+                                    onClickLabel = "切换模式",
+                                    onClick = throttle {
+                                        showSearchBar = false
+                                        storeFlow.update { it.copy(blockA11yAppListFollowMatch = !it.blockA11yAppListFollowMatch) }
+                                        fixRestartService()
+                                    }
+                                )
+
+                                var expanded by remember { mutableStateOf(false) }
+                                AnimatedVisibility(!store.blockA11yAppListFollowMatch) {
+                                    Row {
+                                        IconButton(onClick = throttle {
+                                            if (showSearchBar) {
+                                                if (vm.searchStrFlow.value.isEmpty()) {
+                                                    showSearchBar = false
+                                                } else {
+                                                    vm.searchStrFlow.value = ""
+                                                }
+                                            } else {
+                                                showSearchBar = true
+                                            }
+                                        }) {
+                                            AnimatedIcon(
+                                                id = SafeR.ic_anim_search_close,
+                                                atEnd = showSearchBar,
                                             )
                                         }
-                                        vm.editableFlow.update { !it }
-                                    })
-                                IconButton(onClick = throttle {
-                                    if (showSearchBar) {
-                                        if (vm.searchStrFlow.value.isEmpty()) {
-                                            vm.showSearchBarFlow.value = false
-                                        } else {
-                                            vm.searchStrFlow.value = ""
-                                        }
-                                    } else {
-                                        vm.showSearchBarFlow.value = true
+                                        PerfIconButton(imageVector = PerfIcon.Sort, onClick = {
+                                            expanded = true
+                                        })
                                     }
-                                }) {
-                                    AnimatedIcon(
-                                        id = SafeR.ic_anim_search_close,
-                                        atEnd = showSearchBar,
-                                    )
                                 }
-                                var expanded by remember { mutableStateOf(false) }
-                                PerfIconButton(imageVector = PerfIcon.Sort, onClick = {
-                                    expanded = true
-                                })
                                 Box(
                                     modifier = Modifier
                                         .wrapContentSize(Alignment.TopStart)
@@ -251,27 +255,6 @@ fun BlockA11yAppListPage() {
                                                 },
                                             )
                                         }
-                                        Text(
-                                            text = "筛选",
-                                            modifier = Modifier.menuPadding(),
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.primary,
-                                        )
-                                        val handle1 = {
-                                            storeFlow.update { s -> s.copy(a11yShowSystemApp = !showSystemApp) }
-                                        }
-                                        DropdownMenuItem(
-                                            text = {
-                                                Text("显示系统应用")
-                                            },
-                                            trailingIcon = {
-                                                Checkbox(
-                                                    checked = showSystemApp,
-                                                    onCheckedChange = { handle1() }
-                                                )
-                                            },
-                                            onClick = handle1,
-                                        )
                                     }
                                 }
                             }
@@ -279,15 +262,38 @@ fun BlockA11yAppListPage() {
                     )
                 })
         },
-        floatingActionButton = {},
+        floatingActionButton = {
+            AnimationFloatingActionButton(
+                visible = !editable && scrollBehavior.isFullVisible && !store.blockA11yAppListFollowMatch,
+                onClickLabel = "进入白名单文本编辑模式",
+                onClick = {
+                    editable = !editable
+                },
+                content = {
+                    PerfIcon(imageVector = PerfIcon.Edit)
+                }
+            )
+        },
     ) { contentPadding ->
-        if (editable) {
+        if (store.blockA11yAppListFollowMatch) {
+            Column(
+                modifier = Modifier.scaffoldPadding(contentPadding),
+            ) {
+                Spacer(modifier = Modifier.height(EmptyHeight))
+                Text(
+                    text = "已设置为跟随应用白名单",
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.tertiary,
+                )
+            }
+        } else if (editable) {
             MultiTextField(
                 modifier = Modifier.scaffoldPadding(contentPadding),
                 textFlow = vm.textFlow,
                 immediateFocus = true,
                 placeholderText = "请输入应用ID列表\n示例:\ncom.android.systemui\ncom.android.settings",
-                indicatorText = vm.indicatorTextFlow.collectAsState().value,
+                indicatorSize = vm.indicatorSizeFlow.collectAsState().value,
             )
         } else {
             LazyColumn(
@@ -300,11 +306,9 @@ fun BlockA11yAppListPage() {
                 item(ListPlaceholder.KEY, ListPlaceholder.TYPE) {
                     Spacer(modifier = Modifier.height(EmptyHeight))
                     if (appInfos.isEmpty() && searchStr.isNotEmpty()) {
-                        val hasShowAll = showSystemApp
-                        EmptyText(text = if (hasShowAll) "暂无搜索结果" else "暂无搜索结果，请尝试修改筛选条件")
+                        EmptyText(text = "暂无搜索结果")
                         Spacer(modifier = Modifier.height(EmptyHeight / 2))
                     }
-                    QueryPkgAuthCard()
                 }
             }
         }
@@ -316,11 +320,24 @@ private fun AppItemCard(
     appInfo: AppInfo,
 ) {
     val scope = rememberCoroutineScope()
+    val checked = remember(appInfo.id) {
+        blockA11yAppListFlow.mapState(scope) {
+            it.contains(appInfo.id)
+        }
+    }.collectAsState().value
     Row(
         modifier = Modifier
             .clickable(onClick = throttle {
                 blockA11yAppListFlow.update { it.switchItem(appInfo.id) }
             })
+            .clearAndSetSemantics {
+                contentDescription = "应用：${appInfo.name}"
+                stateDescription = if (checked) "已加入白名单" else "未加入白名单"
+                onClick(
+                    label = if (checked) "从白名单中移除" else "加入白名单",
+                    action = null
+                )
+            }
             .appItemPadding(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -343,11 +360,7 @@ private fun AppItemCard(
         }
         PerfCheckbox(
             key = appInfo.id,
-            checked = remember(appInfo.id) {
-                blockA11yAppListFlow.mapState(scope) {
-                    it.contains(appInfo.id)
-                }
-            }.collectAsState().value,
+            checked = checked,
         )
     }
 }

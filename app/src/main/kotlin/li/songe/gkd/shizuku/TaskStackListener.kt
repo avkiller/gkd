@@ -4,6 +4,7 @@ import android.app.ActivityManager
 import android.app.ITaskStackListener
 import android.content.ComponentName
 import android.os.Parcel
+import li.songe.gkd.a11y.ActivityScene
 import li.songe.gkd.a11y.updateTopActivity
 
 class FixedTaskStackListener : ITaskStackListener.Stub() {
@@ -20,22 +21,22 @@ class FixedTaskStackListener : ITaskStackListener.Stub() {
             lastFront = 0
             return
         }
-        val cpn = safeGetTopCpn() ?: return
+        val cpn = shizukuContextFlow.value.topCpn() ?: return
         updateTopActivity(
             appId = cpn.packageName,
             activityId = cpn.className,
-            type = 1,
+            scene = ActivityScene.TaskStack,
         )
     }
 
     private var lastFront = 0L
     fun onTaskMovedToFrontCompat(cpn: ComponentName? = null) {
         lastFront = System.currentTimeMillis()
-        val cpn = cpn ?: safeGetTopCpn() ?: return
+        val cpn = cpn ?: shizukuContextFlow.value.topCpn() ?: return
         updateTopActivity(
             appId = cpn.packageName,
             activityId = cpn.className,
-            type = 2,
+            scene = ActivityScene.TaskStack,
         )
     }
 

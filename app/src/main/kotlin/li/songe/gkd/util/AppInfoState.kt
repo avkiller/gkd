@@ -4,24 +4,28 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import li.songe.gkd.META
+import kotlinx.coroutines.launch
+import li.songe.gkd.App
 import li.songe.gkd.app
 import li.songe.gkd.appScope
 import li.songe.gkd.data.AppInfo
 import li.songe.gkd.data.otherUserMapFlow
 import li.songe.gkd.data.toAppInfo
+import li.songe.gkd.data.toAppInfoAndIcon
+import li.songe.gkd.isActivityVisible
 import li.songe.gkd.permission.canQueryPkgState
 import li.songe.gkd.shizuku.currentUserId
 import li.songe.gkd.shizuku.shizukuContextFlow
@@ -51,21 +55,10 @@ val systemAppsFlow by lazy { systemAppInfoCacheFlow.mapState(appScope) { c -> c.
 
 val visibleAppInfosFlow by lazy {
     appInfoMapFlow.mapState(appScope) { c ->
-        c.values.filter { it.visible }.sortedWith { a, b ->
+        c.values.filterNot { it.hidden }.sortedWith { a, b ->
             collator.compare(a.name, b.name)
         }
     }
-}
-
-private fun Map<String, AppInfo>.getMayQueryPkgNoAccess(): Boolean {
-    return values.count { a -> !a.isSystem && !a.hidden && a.id != META.appId } < MINIMUM_NORMAL_APP_SIZE
-}
-
-// https://github.com/orgs/gkd-kit/discussions/761
-// 某些设备在应用更新后出现权限错乱/缓存错乱
-private const val MINIMUM_NORMAL_APP_SIZE = 8
-val mayQueryPkgNoAccessFlow by lazy {
-    userAppInfoMapFlow.mapState(appScope) { it.getMayQueryPkgNoAccess() }
 }
 
 private val willUpdateAppIds by lazy { MutableStateFlow(emptySet<String>()) }
@@ -97,13 +90,7 @@ private val packageReceiver by lazy {
     }
 }
 
-const val PKG_FLAGS = PackageManager.MATCH_UNINSTALLED_PACKAGES or PackageManager.GET_ACTIVITIES
-
-private fun getPkgInfo(appId: String): PackageInfo? = try {
-    app.packageManager.getPackageInfo(appId, PKG_FLAGS)
-} catch (_: PackageManager.NameNotFoundException) {
-    null
-}
+const val PKG_FLAGS = PackageManager.MATCH_UNINSTALLED_PACKAGES
 
 val updateAppMutex = MutexState()
 
@@ -129,8 +116,11 @@ private fun updateOtherUserAppInfo(userAppInfoMap: Map<String, AppInfo>? = null)
     userPackageInfoMap.forEach { (userId, pkgInfoList) ->
         pkgInfoList.forEach { pkgInfo ->
             if (!newAppMap.contains(pkgInfo.packageName)) {
-                newAppMap[pkgInfo.packageName] = pkgInfo.toAppInfo(userId = userId)
-                pkgInfo.pkgIcon?.let { newIconMap[pkgInfo.packageName] = it }
+                val (appInfo, appIcon) = pkgInfo.toAppInfoAndIcon(userId)
+                newAppMap[pkgInfo.packageName] = appInfo
+                if (appIcon != null) {
+                    newIconMap[pkgInfo.packageName] = appIcon
+                }
             }
         }
     }
@@ -146,7 +136,7 @@ private fun updatePartAppInfo(
     val newAppMap = HashMap(userAppInfoMapFlow.value)
     val newIconMap = HashMap(userAppIconMapFlow.value)
     appIds.forEach { appId ->
-        val info = getPkgInfo(appId)
+        val info = app.getPkgInfo(appId)
         if (info != null) {
             newAppMap[appId] = info.toAppInfo()
         } else {
@@ -164,39 +154,60 @@ private fun updatePartAppInfo(
     userAppIconMapFlow.value = newIconMap
 }
 
-fun updateAllAppInfo(
-    showToast: Boolean = false,
-) = updateAppMutex.launchTry(appScope, Dispatchers.IO) {
+fun updateAllAppInfo(): Unit = updateAppMutex.launchTry(appScope, Dispatchers.IO) {
     val newAppMap = HashMap<String, AppInfo>()
     val newIconMap = HashMap<String, Drawable>()
+    // see #1169
     val pkgList = app.packageManager.getInstalledPackages(PKG_FLAGS)
-    pkgList.forEach { packageInfo ->
-        newAppMap[packageInfo.packageName] = packageInfo.toAppInfo()
-        packageInfo.pkgIcon?.let { icon ->
-            newIconMap[packageInfo.packageName] = icon
+    pkgList.forEach { pkgInfo ->
+        val (appInfo, appIcon) = pkgInfo.toAppInfoAndIcon()
+        newAppMap[pkgInfo.packageName] = appInfo
+        if (appIcon != null) {
+            newIconMap[pkgInfo.packageName] = appIcon
         }
     }
-    if (!canQueryPkgState.updateAndGet() || newAppMap.getMayQueryPkgNoAccess()) {
-        val visiblePkgList = arrayOf(Intent.ACTION_MAIN, Intent.ACTION_VIEW).map { action ->
-            app.packageManager.queryIntentActivities(
-                Intent(action),
-                PackageManager.MATCH_DISABLED_COMPONENTS
-            )
-        }.flatten()
-            .map { it.activityInfo.packageName }.toSet()
-            .filter { !newAppMap.contains(it) }.mapNotNull { getPkgInfo(it) }
-        visiblePkgList.forEach { packageInfo ->
-            newAppMap[packageInfo.packageName] = packageInfo.toAppInfo()
-            packageInfo.pkgIcon?.let { icon ->
-                newIconMap[packageInfo.packageName] = icon
+    val mayAuthDenied = newAppMap.count { !it.value.isSystem } <= 4
+    canQueryPkgState.updateAndGet()
+    if (!canQueryPkgState.value || mayAuthDenied) {
+        val pkgList2 = shizukuContextFlow.value.packageManager?.getInstalledPackages(PKG_FLAGS)
+        if (!pkgList2.isNullOrEmpty()) {
+            pkgList2.forEach { pkgInfo ->
+                val (appInfo, appIcon) = pkgInfo.toAppInfoAndIcon()
+                newAppMap[pkgInfo.packageName] = appInfo
+                if (appIcon != null) {
+                    newIconMap[pkgInfo.packageName] = appIcon
+                }
+            }
+        } else {
+            val visiblePkgList = arrayOf(Intent.ACTION_MAIN, Intent.ACTION_VIEW).map { action ->
+                app.packageManager.queryIntentActivities(
+                    Intent(action),
+                    PackageManager.MATCH_DISABLED_COMPONENTS
+                )
+            }.flatten()
+                .map { it.activityInfo.packageName }.toSet()
+                .filter { !newAppMap.contains(it) }.mapNotNull { app.getPkgInfo(it) }
+            visiblePkgList.forEach { pkgInfo ->
+                val (appInfo, appIcon) = pkgInfo.toAppInfoAndIcon(hidden = false)
+                newAppMap[pkgInfo.packageName] = appInfo
+                if (appIcon != null) {
+                    newIconMap[pkgInfo.packageName] = appIcon
+                }
             }
         }
     }
     updateOtherUserAppInfo(newAppMap)
     userAppInfoMapFlow.value = newAppMap
     userAppIconMapFlow.value = newIconMap
-    if (showToast) {
+    if (!app.justStarted && isActivityVisible()) {
         toast("应用列表更新成功")
+    }
+    if (canQueryPkgState.value && mayAuthDenied && app.justStarted) {
+        // 概率出现：即使有「读取应用列表权限」在刚启动时也只能获取到少量应用，延迟几秒再试一次
+        appScope.launch {
+            delay(App.START_WAIT_TIME)
+            updateAllAppInfo()
+        }
     }
 }
 
@@ -204,7 +215,7 @@ fun initAppState() {
     packageReceiver
     updateAllAppInfo()
     appScope.launchTry {
-        shizukuContextFlow.collect {
+        shizukuContextFlow.drop(1).collect {
             updateAppMutex.launchTry(appScope, Dispatchers.IO) {
                 updateOtherUserAppInfo()
             }

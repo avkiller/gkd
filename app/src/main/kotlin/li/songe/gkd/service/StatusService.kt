@@ -8,19 +8,23 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import li.songe.gkd.META
+import li.songe.gkd.MainActivity
 import li.songe.gkd.a11y.useA11yServiceEnabledFlow
 import li.songe.gkd.app
 import li.songe.gkd.notif.abNotif
 import li.songe.gkd.permission.foregroundServiceSpecialUseState
 import li.songe.gkd.permission.notificationState
-import li.songe.gkd.permission.shizukuOkState
+import li.songe.gkd.permission.requiredPermission
+import li.songe.gkd.permission.shizukuGrantedState
 import li.songe.gkd.permission.writeSecureSettingsState
 import li.songe.gkd.store.actionCountFlow
 import li.songe.gkd.store.storeFlow
 import li.songe.gkd.util.OnSimpleLife
 import li.songe.gkd.util.RuleSummary
+import li.songe.gkd.util.appInfoMapFlow
 import li.songe.gkd.util.getSubsStatus
 import li.songe.gkd.util.ruleSummaryFlow
 import li.songe.gkd.util.startForegroundServiceByClass
@@ -31,10 +35,10 @@ class StatusService : Service(), OnSimpleLife {
     override fun onCreate() = onCreated()
     override fun onDestroy() = onDestroyed()
 
-    val scope = useScope()
+    override val scope = useScope()
 
     val shizukuWarnFlow = combine(
-        shizukuOkState.stateFlow,
+        shizukuGrantedState.stateFlow,
         storeFlow.map { it.enableShizuku },
     ) { a, b ->
         !a && b
@@ -53,12 +57,15 @@ class StatusService : Service(), OnSimpleLife {
         } else {
             META.appName
         }
-        return if (!abRunning) {
+        return if (shizukuWarn) {
+            Triple(title, "Shizuku 未连接，请授权或关闭优化", "gkd://page/1")
+        } else if (!abRunning) {
             val text = if (a11yServiceEnabledFlow.value) {
                 "无障碍发生故障"
             } else if (writeSecureSettingsState.updateAndGet()) {
-                if (store.enableService && a11yPartDisabledFlow.value) {
-                    "无障碍已局部关闭"
+                if (store.enableService && store.enableBlockA11yAppList && a11yPartDisabledFlow.value) {
+                    val name = appInfoMapFlow.value[topAppIdFlow.value]?.name ?: topAppIdFlow.value
+                    "局部关闭「$name」"
                 } else {
                     "无障碍已关闭"
                 }
@@ -68,8 +75,6 @@ class StatusService : Service(), OnSimpleLife {
             Triple(title, text, abNotif.uri)
         } else if (!store.enableMatch) {
             Triple(title, "暂停规则匹配", "gkd://page?tab=1")
-        } else if (shizukuWarn) {
-            Triple(title, "Shizuku 未连接，请授权或关闭优化", "gkd://page/1")
         } else if (store.useCustomNotifText) {
             Triple(
                 title,
@@ -98,7 +103,7 @@ class StatusService : Service(), OnSimpleLife {
                     shizukuWarnFlow,
                     a11yServiceEnabledFlow,
                     writeSecureSettingsState.stateFlow,
-                    a11yPartDisabledFlow,
+                    topAppIdFlow,
                     actionCountFlow.debounce(1000L),
                 ) {
                     statusTriple()
@@ -123,6 +128,12 @@ class StatusService : Service(), OnSimpleLife {
         val isRunning = MutableStateFlow(false)
         fun start() = startForegroundServiceByClass(StatusService::class)
         fun stop() = stopServiceByClass(StatusService::class)
+        suspend fun requestStart(context: MainActivity) {
+            requiredPermission(context, foregroundServiceSpecialUseState)
+            requiredPermission(context, notificationState)
+            start()
+            storeFlow.update { it.copy(enableStatusService = true) }
+        }
 
         private var lastAutoStart = 0L
         fun autoStart() {

@@ -6,20 +6,23 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.PowerManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.core.content.ContextCompat
 import com.blankj.utilcode.util.LogUtils
 import com.google.android.accessibility.selecttospeak.SelectToSpeakService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.withContext
 import li.songe.gkd.a11y.A11yContext
 import li.songe.gkd.a11y.A11yRuleEngine
 import li.songe.gkd.a11y.a11yContext
+import li.songe.gkd.a11y.appChangeTime
 import li.songe.gkd.a11y.isUseful
 import li.songe.gkd.a11y.onA11yFeatInit
 import li.songe.gkd.a11y.setGeneratedTime
 import li.songe.gkd.a11y.typeInfo
+import li.songe.gkd.app
 import li.songe.gkd.data.ActionPerformer
 import li.songe.gkd.data.ActionResult
 import li.songe.gkd.data.GkdAction
@@ -37,9 +40,18 @@ abstract class A11yService : AccessibilityService(), OnA11yLife {
     override fun onDestroy() = onDestroyed()
     override val a11yEventCbs = mutableListOf<(AccessibilityEvent) -> Unit>()
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        if (event == null || !event.isUseful) return
+        if (!event.isUseful()) return
         onA11yEvent(event)
     }
+
+    val startTime = System.currentTimeMillis()
+    var justStarted: Boolean = true
+        get() {
+            if (field) {
+                field = System.currentTimeMillis() - startTime < 3_000
+            }
+            return field
+        }
 
     val safeActiveWindow: AccessibilityNodeInfo?
         get() = try {
@@ -49,15 +61,16 @@ abstract class A11yService : AccessibilityService(), OnA11yLife {
         } catch (_: Throwable) {
             null
         }.apply {
-            a11yContext.rootCache = this
+            a11yContext.rootCache.value = this
         }
 
     val safeActiveWindowAppId: String?
         get() = safeActiveWindow?.packageName?.toString()
 
-    val scope = useScope()
-    val powerManager by lazy { getSystemService(POWER_SERVICE) as PowerManager }
+    override val scope = useScope()
     var isInteractive = true
+        private set
+    var onScreenForcedActive = {}
     private val screenStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(
             context: Context?,
@@ -68,7 +81,14 @@ abstract class A11yService : AccessibilityService(), OnA11yLife {
             isInteractive = when (action) {
                 Intent.ACTION_SCREEN_ON -> true
                 Intent.ACTION_SCREEN_OFF -> false
+                Intent.ACTION_USER_PRESENT -> true
                 else -> isInteractive
+            }
+            if (isInteractive) {
+                val t = System.currentTimeMillis()
+                if (t - appChangeTime > 500) { // 37.872(a11y) -> 38.228(onReceive)
+                    onScreenForcedActive()
+                }
             }
         }
     }
@@ -82,13 +102,14 @@ abstract class A11yService : AccessibilityService(), OnA11yLife {
         onCreated { a11yRef = this }
         onDestroyed { a11yRef = null }
         onCreated {
-            isInteractive = powerManager.isInteractive
+            isInteractive = app.powerManager.isInteractive
             ContextCompat.registerReceiver(
                 this,
                 screenStateReceiver,
                 IntentFilter().apply {
                     addAction(Intent.ACTION_SCREEN_ON)
                     addAction(Intent.ACTION_SCREEN_OFF)
+                    addAction(Intent.ACTION_USER_PRESENT)
                 },
                 ContextCompat.RECEIVER_EXPORTED
             )
@@ -99,15 +120,14 @@ abstract class A11yService : AccessibilityService(), OnA11yLife {
     }
 
     companion object {
-        val a11yComponentName by lazy { SelectToSpeakService::class.componentName }
-        val a11yClsName by lazy { a11yComponentName.flattenToShortString() }
+        val a11yCn by lazy { SelectToSpeakService::class.componentName }
 
         val isRunning = MutableStateFlow(false)
         private var a11yRef: A11yService? = null
         val instance: A11yService?
             get() = a11yRef
 
-        fun execAction(gkdAction: GkdAction): ActionResult {
+        suspend fun execAction(gkdAction: GkdAction): ActionResult {
             val service = instance ?: throw RpcError("无障碍没有运行")
             val selector = Selector.parseOrNull(gkdAction.selector) ?: throw RpcError("非法选择器")
             runCatching { selector.checkType(typeInfo) }.exceptionOrNull()?.let {
@@ -121,9 +141,11 @@ abstract class A11yService : AccessibilityService(), OnA11yLife {
                     matchOption
                 )
             } ?: throw RpcError("没有查询到节点")
-            return ActionPerformer
-                .getAction(gkdAction.action ?: ActionPerformer.None.action)
-                .perform(targetNode, gkdAction.position)
+            return withContext(Dispatchers.IO) {
+                ActionPerformer
+                    .getAction(gkdAction.action ?: ActionPerformer.None.action)
+                    .perform(targetNode, gkdAction.position)
+            }
         }
     }
 }

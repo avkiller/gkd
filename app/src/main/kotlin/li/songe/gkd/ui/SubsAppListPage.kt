@@ -45,7 +45,6 @@ import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
 import li.songe.gkd.ui.component.PerfTopAppBar
-import li.songe.gkd.ui.component.QueryPkgAuthCard
 import li.songe.gkd.ui.component.SubsAppCard
 import li.songe.gkd.ui.component.TowLineText
 import li.songe.gkd.ui.component.autoFocus
@@ -232,7 +231,7 @@ fun SubsAppListPage(
                         context.justHideSoftInput()
                         mainVm.navigatePage(SubsAppGroupListPageDestination(subsItemId, a.id))
                     },
-                    onValueChange = throttle(fn = vm.viewModelScope.launchAsFn { enable ->
+                    onValueChange = vm.viewModelScope.launchAsFn { enable ->
                         val newItem = a.appConfig?.copy(
                             enable = enable
                         ) ?: AppConfig(
@@ -241,7 +240,7 @@ fun SubsAppListPage(
                             appId = a.id,
                         )
                         DbSet.appConfigDao.insert(newItem)
-                    }),
+                    },
                 )
             }
             item(ListPlaceholder.KEY, ListPlaceholder.TYPE) {
@@ -257,7 +256,6 @@ fun SubsAppListPage(
                     )
                     Spacer(modifier = Modifier.height(EmptyHeight / 2))
                 }
-                QueryPkgAuthCard()
             }
         }
     }

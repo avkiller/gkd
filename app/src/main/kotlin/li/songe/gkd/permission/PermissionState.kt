@@ -15,16 +15,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.updateAndGet
 import li.songe.gkd.MainActivity
 import li.songe.gkd.app
-import li.songe.gkd.isActivityVisible
-import li.songe.gkd.shizuku.shizukuCheckGranted
+import li.songe.gkd.shizuku.SafePackageManager
+import li.songe.gkd.shizuku.shizukuContextFlow
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.util.AndroidTarget
-import li.songe.gkd.util.mayQueryPkgNoAccessFlow
 import li.songe.gkd.util.toast
 import li.songe.gkd.util.updateAllAppInfo
 import li.songe.gkd.util.updateAppMutex
+import rikka.shizuku.Shizuku
 
 class PermissionState(
+    val name: String,
     val check: () -> Boolean,
     val request: (suspend (context: MainActivity) -> PermissionResult)? = null,
     /**
@@ -33,19 +34,24 @@ class PermissionState(
     val reason: AuthReason? = null,
 ) {
     val stateFlow = MutableStateFlow(false)
-    val value: Boolean
-        get() = stateFlow.value
+    val value get() = stateFlow.value
 
     fun updateAndGet(): Boolean {
         return stateFlow.updateAndGet { check() }
     }
 
-    fun checkOrToast(): Boolean {
+    fun updateChanged(): Boolean {
+        return value != updateAndGet()
+    }
+
+    fun checkOrToast(): Boolean = if (!updateAndGet()) {
         val r = updateAndGet()
         if (!r) {
             reason?.text?.let { toast(it()) }
         }
-        return r
+        r
+    } else {
+        true
     }
 }
 
@@ -83,27 +89,25 @@ private suspend fun asyncRequestPermission(
 }
 
 @Suppress("SameParameterValue")
-private fun checkOpNoThrow(op: String): Int {
-    if (AndroidTarget.Q) {
-        try {
-            return app.appOpsManager.checkOpNoThrow(
-                op,
-                android.os.Process.myUid(),
-                app.packageName
-            )
-        } catch (e: Throwable) {
-            e.printStackTrace()
-        }
-    }
-    return AppOpsManager.MODE_ALLOWED
+private fun checkAllowedOp(op: String): Boolean = app.appOpsManager.checkOpNoThrow(
+    op,
+    android.os.Process.myUid(),
+    app.packageName
+).let {
+    it != AppOpsManager.MODE_IGNORED && it != AppOpsManager.MODE_ERRORED
 }
 
 // https://github.com/gkd-kit/gkd/issues/954
 // https://github.com/gkd-kit/gkd/issues/887
 val foregroundServiceSpecialUseState by lazy {
     PermissionState(
+        name = "特殊用途的前台服务",
         check = {
-            checkOpNoThrow("android:foreground_service_special_use") != AppOpsManager.MODE_IGNORED
+            if (AndroidTarget.UPSIDE_DOWN_CAKE) {
+                checkAllowedOp("android:foreground_service_special_use")
+            } else {
+                true
+            }
         },
         reason = AuthReason(
             text = { "当前操作权限「特殊用途的前台服务」已被限制, 请先解除限制" },
@@ -120,6 +124,7 @@ val foregroundServiceSpecialUseState by lazy {
 val notificationState by lazy {
     val permission = PermissionLists.getNotificationServicePermission()
     PermissionState(
+        name = "通知权限",
         check = {
             XXPermissions.isGrantedPermission(app, permission)
         },
@@ -136,6 +141,7 @@ val notificationState by lazy {
 val canQueryPkgState by lazy {
     val permission = PermissionLists.getGetInstalledAppsPermission()
     PermissionState(
+        name = "读取应用列表权限",
         check = {
             XXPermissions.isGrantedPermission(app, permission)
         },
@@ -153,17 +159,14 @@ val canQueryPkgState by lazy {
 
 val canDrawOverlaysState by lazy {
     PermissionState(
+        name = "悬浮窗权限",
         check = {
             // https://developer.android.com/security/fraud-prevention/activities?hl=zh-cn#hide_overlay_windows
             Settings.canDrawOverlays(app)
         },
         reason = AuthReason(
             text = {
-                if (isActivityVisible()) {
-                    "当前操作需要「悬浮窗权限」\n请先前往权限页面授权"
-                } else {
-                    "缺少「悬浮窗权限」请先授权\n或当前应用拒绝显示悬浮窗"
-                }
+                "当前操作需要「悬浮窗权限」\n请先前往权限页面授权"
             },
             confirm = {
                 XXPermissions.startPermissionActivity(
@@ -177,6 +180,7 @@ val canDrawOverlaysState by lazy {
 
 val canWriteExternalStorage by lazy {
     PermissionState(
+        name = "写入外部存储权限",
         check = {
             if (AndroidTarget.Q) {
                 true
@@ -203,29 +207,74 @@ val canWriteExternalStorage by lazy {
     )
 }
 
+val ignoreBatteryOptimizationsState by lazy {
+    val permission = PermissionLists.getRequestIgnoreBatteryOptimizationsPermission()
+    PermissionState(
+        name = "忽略电池优化权限",
+        check = {
+            app.powerManager.isIgnoringBatteryOptimizations(app.packageName)
+        },
+        request = {
+            asyncRequestPermission(it, permission)
+        },
+        reason = AuthReason(
+            text = { "当前操作需要「忽略电池优化权限」\n请先前往权限页面授权" },
+            confirm = {
+                XXPermissions.startPermissionActivity(
+                    app,
+                    permission
+                )
+            }
+        ),
+    )
+}
+
 val writeSecureSettingsState by lazy {
     PermissionState(
+        name = "写入安全设置权限",
         check = { checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) },
     )
 }
 
-val shizukuOkState by lazy {
+private fun shizukuCheckGranted(): Boolean {
+    val granted = try {
+        Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
+    } catch (_: Throwable) {
+        false
+    }
+    if (!granted) return false
+    val u = shizukuContextFlow.value.packageManager ?: SafePackageManager.newBinder()
+    return u?.isSafeMode != null
+}
+
+val shizukuGrantedState by lazy {
     PermissionState(
+        name = "Shizuku 权限",
         check = { shizukuCheckGranted() },
     )
 }
 
-fun updatePermissionState() {
-    val stateChanged = canQueryPkgState.stateFlow.value != canQueryPkgState.updateAndGet()
-    if (!updateAppMutex.mutex.isLocked && (stateChanged || mayQueryPkgNoAccessFlow.value)) {
-        updateAllAppInfo()
-    }
-    arrayOf(
+val allPermissionStates by lazy {
+    listOf(
         notificationState,
         foregroundServiceSpecialUseState,
         canDrawOverlaysState,
         canWriteExternalStorage,
+        ignoreBatteryOptimizationsState,
         writeSecureSettingsState,
-        shizukuOkState,
-    ).forEach { it.updateAndGet() }
+        canQueryPkgState,
+        shizukuGrantedState,
+    )
+}
+
+fun updatePermissionState() {
+    allPermissionStates.forEach {
+        if (it === canQueryPkgState && !updateAppMutex.mutex.isLocked) {
+            if (canQueryPkgState.updateChanged()) {
+                updateAllAppInfo()
+            }
+        } else {
+            it.updateAndGet()
+        }
+    }
 }

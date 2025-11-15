@@ -4,13 +4,16 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
@@ -90,19 +93,23 @@ fun RuleGroupCard(
             }
         }
     }
-
-    val (checked, excludeData) = if (inGlobalAppPage) {
-        val excludeData = remember(subsConfig?.exclude) {
-            ExcludeData.parse(subsConfig?.exclude)
-        }
-        getGlobalGroupChecked(subs, excludeData, group, appId) to excludeData
+    val excludeData = remember(subsConfig?.exclude) {
+        ExcludeData.parse(subsConfig?.exclude)
+    }
+    val checked = if (inGlobalAppPage) {
+        getGlobalGroupChecked(
+            subs,
+            excludeData,
+            group,
+            appId,
+        )
     } else {
         getGroupEnable(
             group,
             subsConfig,
             category,
-            categoryConfig
-        ) to null
+            categoryConfig,
+        )
     }
     val onCheckedChange = appScope.launchAsFn<Boolean> { newChecked ->
         val newConfig = if (appId != null) {
@@ -163,29 +170,33 @@ fun RuleGroupCard(
     )
     Card(
         modifier = modifier
-            .padding(
-                vertical = 2.dp,
-                horizontal = 8.dp
-            )
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+            .padding(horizontal = 8.dp)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick,
+                onClickLabel = "打开规则详情弹窗",
+                onLongClickLabel = "进入多选模式"
+            ),
         shape = MaterialTheme.shapes.extraSmall,
         colors = CardDefaults.cardColors(
             containerColor = containerColor.value
         ),
     ) {
-        val visible = if (inGlobalAppPage) {
-            excludeData != null && excludeData.appIds.contains(appId)
+        val canRest = if (inGlobalAppPage) {
+            excludeData.appIds.contains(appId)
         } else {
             subsConfig?.enable != null
         }
-        FlagCard(
-            visible = visible,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-        ) {
+        val hasExcludeActivity = if (inGlobalAppPage) {
+            checked != null && excludeData.activityIds.any { it.first == appId }
+        } else {
+            excludeData.activityIds.isNotEmpty()
+        }
+        Box {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -203,7 +214,6 @@ fun RuleGroupCard(
                         maxLines = 1,
                         softWrap = false,
                         overflow = TextOverflow.Ellipsis,
-                        clickDisabled = isSelectedMode,
                     )
                     if (group.valid) {
                         if (!group.desc.isNullOrBlank()) {
@@ -241,7 +251,13 @@ fun RuleGroupCard(
                         key = Objects.hash(subs.id, appId, group.key),
                         modifier = switchModifier.minimumInteractiveComponentSize(),
                         checked = checked,
-                        onCheckedChange = if (isSelectedMode) null else throttle(onCheckedChange)
+                        onCheckedChange = if (isSelectedMode) null else onCheckedChange,
+                        thumbContent = if (canRest) ({
+                            PerfIcon(
+                                imageVector = ResetSettings,
+                                modifier = Modifier.size(8.dp)
+                            )
+                        }) else null,
                     )
                 } else {
                     InnerDisableSwitch(
@@ -249,6 +265,21 @@ fun RuleGroupCard(
                         isSelectedMode = isSelectedMode,
                     )
                 }
+            }
+            if (hasExcludeActivity) {
+                PerfIcon(
+                    imageVector = PerfIcon.Block,
+                    contentDescription = "此规则已排除部分页面",
+                    tint = if (isSelectedMode) {
+                        LocalContentColor.current.copy(alpha = 0.5f)
+                    } else {
+                        LocalContentColor.current
+                    },
+                    modifier = Modifier
+                        .padding(top = 4.dp, end = 4.dp)
+                        .align(Alignment.TopEnd)
+                        .size(8.dp)
+                )
             }
         }
     }
@@ -260,6 +291,7 @@ fun BatchActionButtonGroup(vm: ViewModel, selectedDataSet: Set<ShowGroupState>) 
     val mainVm = LocalMainViewModel.current
     PerfIconButton(
         imageVector = PerfIcon.ToggleOff,
+        contentDescription = "批量关闭规则",
         onClick = throttle(vm.viewModelScope.launchAsFn(Dispatchers.Default) {
             mainVm.dialogFlow.waitResult(
                 title = "操作提示",
@@ -275,6 +307,7 @@ fun BatchActionButtonGroup(vm: ViewModel, selectedDataSet: Set<ShowGroupState>) 
     )
     PerfIconButton(
         imageVector = PerfIcon.ToggleOn,
+        contentDescription = "批量打开规则",
         onClick = throttle(vm.viewModelScope.launchAsFn(Dispatchers.Default) {
             mainVm.dialogFlow.waitResult(
                 title = "操作提示",
@@ -290,6 +323,7 @@ fun BatchActionButtonGroup(vm: ViewModel, selectedDataSet: Set<ShowGroupState>) 
     )
     PerfIconButton(
         imageVector = ResetSettings,
+        contentDescription = "批量重置规则开关",
         onClick = throttle(vm.viewModelScope.launchAsFn(Dispatchers.Default) {
             mainVm.dialogFlow.waitResult(
                 title = "操作提示",

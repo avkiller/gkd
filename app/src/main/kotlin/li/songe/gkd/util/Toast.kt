@@ -8,8 +8,7 @@ import android.graphics.Outline
 import android.graphics.PixelFormat
 import android.graphics.drawable.GradientDrawable
 import android.graphics.text.LineBreaker
-import android.os.Handler
-import android.os.Looper
+import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -28,13 +27,15 @@ import li.songe.gkd.app
 import li.songe.gkd.appScope
 import li.songe.gkd.service.A11yService
 import li.songe.gkd.store.storeFlow
+import li.songe.loc.Loc
 
-fun toast(text: CharSequence, delayMillis: Long = 0L) {
-    if (delayMillis > 0) {
-        Toaster.delayedShow(text, delayMillis)
-    } else {
-        Toaster.show(text)
-    }
+@Loc
+fun toast(
+    text: CharSequence,
+    @Loc("{methodName}({fileName}:{lineNumber})") loc: String = "",
+) {
+    Toaster.show(text)
+    Log.d("Toast", "$loc -> $text")
 }
 
 private val darkTheme: Boolean
@@ -161,12 +162,12 @@ private fun showA11yToast(message: CharSequence) {
         windowAnimations = android.R.style.Animation_Toast
     }
     wm.addView(textView, layoutParams)
-    Handler(Looper.getMainLooper()).postDelayed({
+    runMainPost(triggerInterval) {
         try {
             wm.removeViewImmediate(textView)
         } catch (_: Exception) {
         }
-    }, triggerInterval)
+    }
 }
 
 fun copyText(text: String) {
@@ -176,5 +177,7 @@ fun copyText(text: String) {
 
 fun initToast() {
     Toaster.init(app)
+    Toaster.setDebugMode(false)
+    Toaster.setInterceptor { false } // 覆盖默认拦截器
     setReactiveToastStyle()
 }

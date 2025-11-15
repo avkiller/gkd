@@ -25,7 +25,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import kotlinx.coroutines.Dispatchers
-import li.songe.gkd.META
 import li.songe.gkd.permission.foregroundServiceSpecialUseState
 import li.songe.gkd.ui.component.AuthButtonGroup
 import li.songe.gkd.ui.component.EmptyText
@@ -40,7 +39,6 @@ import li.songe.gkd.ui.style.cardHorizontalPadding
 import li.songe.gkd.ui.style.itemHorizontalPadding
 import li.songe.gkd.ui.style.surfaceCardColors
 import li.songe.gkd.util.launchAsFn
-import li.songe.gkd.util.runCommandByRoot
 import li.songe.gkd.util.toast
 
 @Destination<RootGraph>(style = ProfileTransitions::class)
@@ -87,22 +85,19 @@ fun AppOpsAllowPage() {
                         style = MaterialTheme.typography.bodySmall,
                     )
                     AuthButtonGroup(
-                        onClickShizuku = vm.viewModelScope.launchAsFn(Dispatchers.IO) {
-                            mainVm.grantPermissionByShizuku(appOpsCommand)
-                            toast("授权成功")
-                        },
-                        onClickManual = {
-                            vm.showCopyDlgFlow.value = true
-                        },
-                        onClickRoot = vm.viewModelScope.launchAsFn(Dispatchers.IO) {
-                            runCommandByRoot(appOpsCommand)
-                            toast("授权成功")
-                        }
+                        buttons = listOf(
+                            "Shizuku 授权" to vm.viewModelScope.launchAsFn(Dispatchers.IO) {
+                                mainVm.guardShizukuContext()
+                                toast("授权成功")
+                            },
+                            "外部授权" to {
+                                vm.showCopyDlgFlow.value = true
+                            },
+                        )
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
             }
-
             Spacer(modifier = Modifier.height(EmptyHeight))
             AnimatedVisibility(visible = restrictedCount == 0) {
                 Spacer(modifier = Modifier.height(EmptyHeight))
@@ -113,15 +108,10 @@ fun AppOpsAllowPage() {
 
     val showCopyDlg by vm.showCopyDlgFlow.collectAsState()
     ManualAuthDialog(
-        commandText = appOpsCommand,
+        commandText = gkdStartCommandText,
         show = showCopyDlg,
         onUpdateShow = {
             vm.showCopyDlgFlow.value = it
         }
     )
 }
-
-private val appOpsCommand by lazy {
-    "appops set ${META.appId} FOREGROUND_SERVICE_SPECIAL_USE allow"
-}
-

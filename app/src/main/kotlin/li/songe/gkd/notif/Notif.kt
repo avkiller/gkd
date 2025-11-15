@@ -15,9 +15,10 @@ import li.songe.gkd.META
 import li.songe.gkd.MainActivity
 import li.songe.gkd.app
 import li.songe.gkd.permission.notificationState
+import li.songe.gkd.service.ActivityService
 import li.songe.gkd.service.ButtonService
+import li.songe.gkd.service.EventService
 import li.songe.gkd.service.HttpService
-import li.songe.gkd.service.RecordService
 import li.songe.gkd.service.ScreenshotService
 import li.songe.gkd.util.AndroidTarget
 import li.songe.gkd.util.SafeR
@@ -118,10 +119,10 @@ val httpNotif = Notif(
     stopService = HttpService::class,
 )
 
-val snapshotActionNotif = Notif(
+val exposeNotif = Notif(
     id = 104,
-    title = "快照服务正在运行",
-    text = "捕获快照完成后自动关闭",
+    title = "运行外部调用任务中",
+    text = "任务完成后自动关闭",
 )
 
 val snapshotNotif = Notif(
@@ -137,5 +138,12 @@ val recordNotif = Notif(
     id = 106,
     title = "记录服务正在运行",
     uri = "gkd://page/1",
-    stopService = RecordService::class,
+    stopService = ActivityService::class,
+)
+
+val eventNotif = Notif(
+    id = 107,
+    title = "事件服务正在运行",
+    uri = "gkd://page/1",
+    stopService = EventService::class,
 )
